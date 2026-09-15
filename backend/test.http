@@ -1,0 +1,50 @@
+### Register Guardian
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "guardian@test.com",
+  "password": "password123",
+  "role": "guardian"
+}
+
+###
+
+### Login Guardian
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "guardian@test.com",
+  "password": "password123"
+}
+
+###
+
+### Register Admin
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin2@test.com",
+  "password": "password123",
+  "role": "admin"
+}
+
+###
+
+### Login Admin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin2@test.com",
+  "password": "password123"
+}
+
+###
+
+### Test Admin Route
+# Replace the token below with the token received from the admin login response
+GET http://localhost:5000/api/admin-only
+Authorization: Bearer YOUR_TOKEN_HERE

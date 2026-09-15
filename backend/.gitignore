@@ -1,0 +1,7 @@
+.env
+node_modules/
+config/firebase-key.json
+scripts/testAuto.js
+scripts/testStep4.js
+scripts/testStep4b.js
+scripts/testModels.js
