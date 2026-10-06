@@ -79,8 +79,8 @@ export default function GuardianSettingsScreen() {
             <Switch
               value={pushEnabled}
               onValueChange={setPushEnabled}
-              trackColor={{ false: '#E2E8F0', true: '#10B981' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORS.border, true: COLORS.mint }}
+              thumbColor={COLORS.card}
             />
           </View>
 
@@ -95,8 +95,8 @@ export default function GuardianSettingsScreen() {
             <Switch
               value={smsEnabled}
               onValueChange={setSmsEnabled}
-              trackColor={{ false: '#E2E8F0', true: '#10B981' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORS.border, true: COLORS.mint }}
+              thumbColor={COLORS.card}
             />
           </View>
 
@@ -111,8 +111,8 @@ export default function GuardianSettingsScreen() {
             <Switch
               value={callEnabled}
               onValueChange={setCallEnabled}
-              trackColor={{ false: '#E2E8F0', true: '#10B981' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORS.border, true: COLORS.mint }}
+              thumbColor={COLORS.card}
             />
           </View>
         </View>
@@ -145,13 +145,13 @@ export default function GuardianSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   container: { padding: 16 },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -166,15 +166,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
+    backgroundColor: COLORS.mintBg,
+    borderColor: COLORS.mint,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
   avatarText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -184,17 +184,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   userEmail: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     letterSpacing: 0.8,
     marginBottom: 10,
     marginTop: 10,
@@ -206,29 +206,29 @@ const styles = StyleSheet.create({
   },
   langBtn: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
   },
   activeLangBtn: {
-    borderColor: '#10B981',
-    backgroundColor: '#ECFDF5',
+    borderColor: COLORS.mint,
+    backgroundColor: COLORS.mintBg,
   },
   langBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
   },
   activeLangBtnText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontWeight: '800',
   },
   cardBox: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 16,
@@ -252,22 +252,22 @@ const styles = StyleSheet.create({
   switchTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   switchSub: {
     fontSize: 11,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   rowDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: COLORS.cardHeader,
   },
   linkedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: COLORS.mintBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -296,27 +296,27 @@ const styles = StyleSheet.create({
   linkedName: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   linkedDetail: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   chevron: {
     fontSize: 20,
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
     fontWeight: '600',
   },
   signOutBtn: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.mintBg,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 30,
   },
   signOutText: {
-    color: '#065F46',
+    color: COLORS.primary,
     fontSize: 15,
     fontWeight: '800',
   },

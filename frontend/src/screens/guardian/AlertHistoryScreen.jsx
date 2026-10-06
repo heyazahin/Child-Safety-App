@@ -93,15 +93,15 @@ export default function AlertHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   container: { flex: 1, padding: 16 },
   chipRow: {
     flexDirection: 'row',
     marginBottom: 12,
   },
   chipBtn: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 16,
@@ -109,20 +109,20 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipBtnSelected: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   chipText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
   },
   chipTextSelected: {
     color: '#FFFFFF',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
     marginTop: 40,
     fontSize: 14,
     fontWeight: '600',

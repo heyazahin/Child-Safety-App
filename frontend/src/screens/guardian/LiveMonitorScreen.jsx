@@ -101,24 +101,24 @@ export default function LiveMonitorScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   container: { padding: 16 },
   liveStreamBadge: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
+    backgroundColor: COLORS.distressBg,
+    borderColor: COLORS.distress,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   liveStreamBadgeText: {
-    color: '#EF4444',
+    color: COLORS.distress,
     fontSize: 10,
     fontWeight: '800',
   },
   ecgCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 18,
@@ -138,12 +138,12 @@ const styles = StyleSheet.create({
   ecgTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     letterSpacing: 0.5,
   },
   ecgSub: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
     marginTop: 2,
   },
   bpmRow: {
@@ -153,24 +153,24 @@ const styles = StyleSheet.create({
   bpmNumber: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#10B981',
+    color: COLORS.secondary,
   },
   bpmUnit: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#10B981',
+    color: COLORS.secondary,
     marginLeft: 4,
   },
   graphBox: {
     height: 60,
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
   graphWaveLine: {
     height: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.secondary,
     borderRadius: 2,
     width: '100%',
   },
@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
   },
   sideCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -195,16 +195,16 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginBottom: 6,
   },
   cardVal: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   pillNormal: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: COLORS.mintBg,
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -212,13 +212,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   pillNormalText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontSize: 11,
     fontWeight: '700',
   },
   motionCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 18,
@@ -235,24 +235,24 @@ const styles = StyleSheet.create({
   motionLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
   },
   motionVal: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
+    color: COLORS.textPrimary,
     marginTop: 4,
   },
   liveBadge: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
+    backgroundColor: COLORS.mintBg,
+    borderColor: COLORS.mint,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   liveBadgeText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontSize: 11,
     fontWeight: '800',
   },

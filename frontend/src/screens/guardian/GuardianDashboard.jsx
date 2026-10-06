@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Vibration } from 'react-native';
 import * as Location from 'expo-location';
 import TopHeader from '../../components/TopHeader';
 import StatusCard from '../../components/StatusCard';
@@ -24,6 +24,11 @@ export default function GuardianDashboard() {
       if (childData && childData._id) {
         const readingData = await getLatestReading(childData._id);
         setReading(readingData.latestReading);
+      }
+      if (childData && childData.currentStatus && childData.currentStatus.toLowerCase() !== 'safe') {
+        try {
+          Vibration.vibrate([0, 500, 200, 500]);
+        } catch (_) {}
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -170,20 +175,20 @@ export default function GuardianDashboard() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   container: { padding: 16 },
   alertIconBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: COLORS.cardHeader,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionHeader: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     letterSpacing: 1,
     marginTop: 10,
     marginBottom: 12,
@@ -195,8 +200,8 @@ const styles = StyleSheet.create({
   },
   sensorCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
@@ -216,7 +221,7 @@ const styles = StyleSheet.create({
   sensorTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     letterSpacing: 0.5,
   },
   sensorIcon: {
@@ -230,12 +235,12 @@ const styles = StyleSheet.create({
   valNumber: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   valUnit: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
   },
   sparklineBox: {
     height: 16,
@@ -244,12 +249,12 @@ const styles = StyleSheet.create({
   },
   sparklineWave: {
     height: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.secondary,
     borderRadius: 2,
     width: '100%',
   },
   pillBadge: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: COLORS.mintBg,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -257,13 +262,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pillBadgeText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontSize: 11,
     fontWeight: '700',
   },
   syncBtn: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#10B981',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.mint,
     borderWidth: 1.5,
     borderRadius: 12,
     paddingVertical: 14,
@@ -275,16 +280,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   syncBtnText: {
-    color: '#10B981',
+    color: COLORS.mint,
     fontSize: 14,
     fontWeight: '800',
   },
   locationCard: {
     borderRadius: 16,
     overflow: 'hidden',
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.card,
     marginBottom: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -295,7 +300,7 @@ const styles = StyleSheet.create({
   locationMapImg: {
     width: '100%',
     height: 100,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: COLORS.cardHeader,
   },
   locationInfoRow: {
     paddingHorizontal: 14,
@@ -304,6 +309,6 @@ const styles = StyleSheet.create({
   locationCoords: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
   },
 });
