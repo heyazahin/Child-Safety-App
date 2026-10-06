@@ -44,6 +44,34 @@ export default function GuardianSettingsScreen() {
           </View>
         </View>
 
+        <Text style={styles.sectionTitle}>
+          {language === 'bn' ? 'প্রোফাইলের তথ্য' : 'PROFILE DETAILS'}
+        </Text>
+        <View style={styles.profileDetailsCard}>
+          <View style={styles.profileDetailRow}>
+            <Text style={styles.profileDetailLabel}>{language === 'bn' ? 'সম্পর্ক' : 'Relationship'}</Text>
+            <Text style={styles.profileDetailValue}>{user?.relationship || 'guardian'}</Text>
+          </View>
+          <View style={styles.profileDetailRow}>
+            <Text style={styles.profileDetailLabel}>{language === 'bn' ? 'ফোন' : 'Phone'}</Text>
+            <Text style={styles.profileDetailValue}>{user?.phone || 'Not provided'}</Text>
+          </View>
+          <View style={styles.profileDetailRow}>
+            <Text style={styles.profileDetailLabel}>{language === 'bn' ? 'জরুরি যোগাযোগ' : 'Emergency contact'}</Text>
+            <Text style={styles.profileDetailValue}>{user?.emergencyContactName || 'Not provided'}</Text>
+          </View>
+          <View style={styles.profileDetailRow}>
+            <Text style={styles.profileDetailLabel}>{language === 'bn' ? 'জরুরি ফোন' : 'Emergency phone'}</Text>
+            <Text style={styles.profileDetailValue}>{user?.emergencyContactPhone || 'Not provided'}</Text>
+          </View>
+          <View style={[styles.profileDetailRow, styles.profileDetailLastRow]}>
+            <Text style={styles.profileDetailLabel}>{language === 'bn' ? 'নিবন্ধিত অবস্থান' : 'Registered location'}</Text>
+            <Text style={styles.profileDetailValue}>
+              {user?.homeAddress || (language === 'bn' ? 'প্রদান করা হয়নি' : 'Not provided')}
+            </Text>
+          </View>
+        </View>
+
         {/* Language Selection Row */}
         <Text style={styles.sectionTitle}>🌐 {t('languageLabel')}</Text>
         <View style={styles.langSelectorRow}>
@@ -181,6 +209,27 @@ const styles = StyleSheet.create({
   profileTextContainer: {
     flex: 1,
   },
+  profileDetailsCard: {
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  profileDetailRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardHeader,
+    paddingVertical: 11,
+  },
+  profileDetailLastRow: { borderBottomWidth: 0 },
+  profileDetailLabel: {
+    fontSize: 10,
+    color: COLORS.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  profileDetailValue: { fontSize: 13, color: COLORS.textPrimary, marginTop: 3 },
   userName: {
     fontSize: 16,
     fontWeight: '800',
