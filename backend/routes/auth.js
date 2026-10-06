@@ -7,6 +7,38 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+router.post('/location-name', async (req, res) => {
+  if (
+    req.body?.lat === null || req.body?.lat === undefined || req.body?.lat === '' ||
+    req.body?.lng === null || req.body?.lng === undefined || req.body?.lng === ''
+  ) {
+    return res.status(400).json({ message: 'Valid latitude and longitude are required.' });
+  }
+  const lat = Number(req.body?.lat);
+  const lng = Number(req.body?.lng);
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return res.status(400).json({ message: 'Valid latitude and longitude are required.' });
+  }
+
+  try {
+    const address = await reverseGeocode(lat, lng);
+    if (!address) {
+      return res.status(502).json({ message: 'Could not resolve a place name for these coordinates.' });
+    }
+    res.json({ address });
+  } catch (error) {
+    console.error('Location lookup error:', error);
+    res.status(502).json({ message: 'Location lookup is temporarily unavailable.' });
+  }
+});
+
 // Register route
 router.post('/register', async (req, res) => {
   try {
@@ -89,7 +121,30 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, role: user.role, user: { id: user._id, email: user.email, name: user.name || user.email.split('@')[0], role: user.role, phone: user.phone } });
+    let homeAddress = user.homeAddress;
+    const homeLocation = user.homeLocation;
+    if (!homeAddress && Number.isFinite(homeLocation?.lat) && Number.isFinite(homeLocation?.lng)) {
+      homeAddress = await reverseGeocode(homeLocation.lat, homeLocation.lng);
+    }
+
+    res.json({
+      token,
+      role: user.role,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name || user.email.split('@')[0],
+        role: user.role,
+        phone: user.phone,
+        relationship: user.relationship,
+        emergencyContactName: user.emergencyContactName,
+        emergencyContactPhone: user.emergencyContactPhone,
+        homeAddress,
+        homeLocation,
+        consentGiven: user.consentGiven,
+        consentGivenAt: user.consentGivenAt,
+      },
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
