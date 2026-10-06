@@ -15,11 +15,22 @@ const alertSchema = new mongoose.Schema({
     enum: ['low', 'medium', 'high'],
     required: true
   },
+  alertType: {
+    type: String,
+    enum: ['distress', 'panic', 'tamper'],
+    default: 'distress'
+  },
   sensorValues: {
     heartRate: Number,
     gsr: Number,
     respiration: Number,
     motionLevel: String
+  },
+  location: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
+    address: { type: String, default: null },
+    googleMapsUrl: { type: String, default: null }
   },
   alertMethodsFired: [{
     type: String,

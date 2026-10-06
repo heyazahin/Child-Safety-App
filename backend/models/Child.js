@@ -45,7 +45,7 @@ const childSchema = new mongoose.Schema({
 
   currentStatus: {
     type: String,
-    enum: ['safe', 'distress', 'offline'],
+    enum: ['safe', 'distress', 'tamper', 'alert', 'offline'],
     default: 'offline'
   },
   lastReadingAt: {

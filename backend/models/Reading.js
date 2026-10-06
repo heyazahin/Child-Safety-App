@@ -31,6 +31,10 @@ const readingSchema = new mongoose.Schema({
     type: String,
     enum: ['simulate', 'hardware'],
     default: 'simulate'
+  },
+  alertType: {
+    type: String,
+    default: 'distress'
   }
 });
 
