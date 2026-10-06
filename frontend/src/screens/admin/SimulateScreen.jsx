@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, FlatList } from 'react-native';
+import * as Location from 'expo-location';
 import TopHeader from '../../components/TopHeader';
 import { getAllChildren, simulateDistress, simulatePanic, simulateTamper } from '../../services/api';
 import { COLORS } from '../../theme';
@@ -31,18 +32,39 @@ export default function SimulateScreen() {
     fetchChildren();
   }, []);
 
+  const getChildLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Location permission is required to send an alert.');
+    }
+
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    return {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      capturedAt: new Date(position.timestamp || Date.now()).toISOString(),
+    };
+  };
+
+  const showSimulationError = (error) => {
+    console.error(error);
+    Alert.alert('Alert not sent', error.response?.data?.message || error.message || 'Simulation failed');
+  };
+
   const handleSimulateTypeA = async () => {
     if (!selectedChild) {
       Alert.alert('Error', 'No child selected');
       return;
     }
     try {
+      const location = await getChildLocation();
       const values = { heartRate: Number(heartRate), gsr: Number(gsr), respiration: Number(respiration), motionLevel };
-      const res = await simulateDistress(selectedChild._id, values);
+      const res = await simulateDistress(selectedChild._id, values, location);
       setLastResult({ ...res, label: 'DISTRESS ALERT FIRED' });
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Simulation failed');
+      showSimulationError(error);
     }
   };
 
@@ -52,11 +74,11 @@ export default function SimulateScreen() {
       return;
     }
     try {
-      const res = await simulatePanic(selectedChild._id);
+      const location = await getChildLocation();
+      const res = await simulatePanic(selectedChild._id, location);
       setLastResult({ ...res, distressDetected: true, label: 'PANIC BUTTON ALERT FIRED' });
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Simulation failed');
+      showSimulationError(error);
     }
   };
 
@@ -66,17 +88,17 @@ export default function SimulateScreen() {
       return;
     }
     try {
-      const res = await simulateTamper(selectedChild._id);
+      const location = await getChildLocation();
+      const res = await simulateTamper(selectedChild._id, location);
       setLastResult({ ...res, distressDetected: true, label: 'TAMPER WARNING FIRED' });
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Simulation failed');
+      showSimulationError(error);
     }
   };
 
   return (
     <View style={styles.screen}>
-      <TopHeader title="SIMULATE READING" subtitle="Test emergency alert pipeline" />
+      <TopHeader title="SIMULATE READING" subtitle="Test alerts use this device's current GPS location" />
 
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionHeader}>SELECT CHILD TARGET</Text>
