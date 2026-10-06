@@ -14,12 +14,12 @@ export default function RootNavigator() {
   }
 
   if (!token) {
-    return <AuthNavigator />;
+    return <AuthNavigator key="signed-out" />;
   }
 
   if (role === 'admin') {
-    return <AdminNavigator />;
+    return <AdminNavigator key="admin" />;
   }
 
-  return <GuardianNavigator />;
+  return <GuardianNavigator key="guardian" />;
 }
