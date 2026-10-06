@@ -37,6 +37,11 @@ export const registerUser = async (registrationData) => {
   return response.data;
 };
 
+export const getLocationName = async ({ lat, lng }) => {
+  const response = await api.post('/auth/location-name', { lat, lng });
+  return response.data.address;
+};
+
 export const getMyChild = async () => {
   try {
     const response = await api.get('/data/my-child');
@@ -72,23 +77,24 @@ export const acknowledgeAlert = async (alertId) => {
   return response.data;
 };
 
-export const simulateDistress = async (childId, sensorValues) => {
+export const simulateDistress = async (childId, sensorValues, location) => {
   const response = await api.post('/data/ingest', {
     childId,
     ...sensorValues,
+    location,
     source: 'simulate'
   });
   return response.data;
 };
 
-export const simulatePanic = async (childId) => {
-  const response = await api.post('/data/panic', { childId });
+export const simulatePanic = async (childId, location) => {
+  const response = await api.post('/data/panic', { childId, location });
   return response.data;
 };
 export const simulateButtonPress = simulatePanic;
 
-export const simulateTamper = async (childId) => {
-  const response = await api.post('/data/tamper', { childId });
+export const simulateTamper = async (childId, location) => {
+  const response = await api.post('/data/tamper', { childId, location });
   return response.data;
 };
 export const simulateBandRemoval = simulateTamper;
