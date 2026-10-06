@@ -17,6 +17,7 @@
     "firebase-admin": "^14.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.3",
+    "serialport": "^13.0.0",
     "twilio": "^6.1.0"
   },
   "devDependencies": {
