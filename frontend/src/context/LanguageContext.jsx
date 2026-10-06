@@ -1,11 +1,11 @@
-import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { translations } from '../i18n/translations';
+import React, { createContext, useState, useEffect } from "react";
+import safeStorage from "../utils/storage";
+import { translations } from "../i18n/translations";
 
 export const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('bn'); // Default to Bangla for maximum accessibility
+  const [language, setLanguage] = useState("bn"); // Default to Bangla for maximum accessibility
 
   useEffect(() => {
     loadLanguagePreference();
@@ -13,21 +13,21 @@ export const LanguageProvider = ({ children }) => {
 
   const loadLanguagePreference = async () => {
     try {
-      const savedLang = await AsyncStorage.getItem('appLanguage');
-      if (savedLang && (savedLang === 'en' || savedLang === 'bn')) {
+      const savedLang = await safeStorage.getItem("appLanguage");
+      if (savedLang && (savedLang === "en" || savedLang === "bn")) {
         setLanguage(savedLang);
       }
     } catch (error) {
-      console.error('Error loading language preference:', error);
+      console.error("Error loading language preference:", error);
     }
   };
 
   const changeLanguage = async (newLang) => {
     try {
       setLanguage(newLang);
-      await AsyncStorage.setItem('appLanguage', newLang);
+      await safeStorage.setItem("appLanguage", newLang);
     } catch (error) {
-      console.error('Error saving language preference:', error);
+      console.error("Error saving language preference:", error);
     }
   };
 

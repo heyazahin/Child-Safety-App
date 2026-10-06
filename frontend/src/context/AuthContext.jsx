@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import safeStorage from '../utils/storage';
 
 export const AuthContext = createContext();
 
@@ -15,9 +15,9 @@ export const AuthProvider = ({ children }) => {
 
   const checkSavedToken = async () => {
     try {
-      const savedToken = await AsyncStorage.getItem('token');
-      const savedRole = await AsyncStorage.getItem('role');
-      const savedUser = await AsyncStorage.getItem('user');
+      const savedToken = await safeStorage.getItem('token');
+      const savedRole = await safeStorage.getItem('role');
+      const savedUser = await safeStorage.getItem('user');
 
       if (savedToken && savedRole) {
         setToken(savedToken);
@@ -39,9 +39,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userObj);
       setRole(userRole);
 
-      await AsyncStorage.setItem('token', authToken);
-      await AsyncStorage.setItem('role', userRole);
-      await AsyncStorage.setItem('user', JSON.stringify(userObj));
+      await safeStorage.setItem('token', authToken);
+      await safeStorage.setItem('role', userRole);
+      await safeStorage.setItem('user', JSON.stringify(userObj));
     } catch (error) {
       console.error('Error saving login session:', error);
     }
@@ -53,9 +53,9 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setRole(null);
 
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('role');
-      await AsyncStorage.removeItem('user');
+      await safeStorage.removeItem('token');
+      await safeStorage.removeItem('role');
+      await safeStorage.removeItem('user');
     } catch (error) {
       console.error('Error clearing session:', error);
     }

@@ -131,6 +131,18 @@ export const translations = {
     regMyLocation: 'My Location',
     regUpdateLocation: 'Update Location',
     regNoLocation: 'No location set',
+
+    // Alert Types & Badges
+    badgeTypeA: '⚠️ Distress',
+    badgeTypeB: '🆘 Panic',
+    badgeTypeC: '⚡ Tamper',
+    statusTypeA: 'Distress detected',
+    statusTypeB: 'PANIC — Check immediately',
+    statusTypeC: 'Wristband being removed',
+    filterAll: 'All Alerts',
+    filterTypeA: 'Distress',
+    filterTypeB: 'Panic',
+    filterTypeC: 'Tamper',
   },
   bn: {
     // Branding & Roles
@@ -264,5 +276,17 @@ export const translations = {
     regMyLocation: 'আমার অবস্থান',
     regUpdateLocation: 'অবস্থান হালনাগাদ করুন',
     regNoLocation: 'অবস্থান নির্ধারিত নেই',
+
+    // Alert Types & Badges
+    badgeTypeA: '⚠️ বিপদ / Distress',
+    badgeTypeB: '🆘 প্যানিক / Panic',
+    badgeTypeC: '⚡ টেম্পার / Tamper',
+    statusTypeA: 'বিপদ সংকেত শনাক্ত',
+    statusTypeB: 'প্যানিক — বোতাম টিপা হয়েছে',
+    statusTypeC: 'রিস্টব্যান্ড খোলার সতর্কতা',
+    filterAll: 'সকল অ্যালার্ট',
+    filterTypeA: 'বিপদ (Distress)',
+    filterTypeB: 'প্যানিক (Panic)',
+    filterTypeC: 'টেম্পার (Tamper)',
   }
 };

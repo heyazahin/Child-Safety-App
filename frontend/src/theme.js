@@ -1,17 +1,18 @@
 import { Platform } from 'react-native';
 
 export const COLORS = {
-  // Figma Light Theme Palette
-  background: '#F8FAFC',
+  // Deep teal and warm cream palette
+  background: '#F8FAF7',
   card: '#FFFFFF',
-  cardHeader: '#F1F5F9',
-  border: '#E2E8F0',
-  borderHighlight: '#CBD5E1',
+  cardHeader: '#F0F4EF',
+  border: '#DDE7E2',
+  borderHighlight: '#C6D5CF',
 
   // Status & accent colors
-  primary: '#10B981', // Emerald Green (active, safe, connected)
-  mint: '#10B981',
-  mintBg: '#ECFDF5',
+  primary: '#0F766E',
+  secondary: '#14B8A6',
+  mint: '#0F766E',
+  mintBg: '#E6F4F1',
 
   distress: '#EF4444', // Coral Red (emergency, distress, critical)
   distressBg: '#FEF2F2',
@@ -19,13 +20,13 @@ export const COLORS = {
   amber: '#F59E0B', // Warm Amber (warnings, attention)
   amberBg: '#FFFBEB',
 
-  safe: '#10B981',
-  safeBg: '#ECFDF5',
+  safe: '#0F766E',
+  safeBg: '#E6F4F1',
 
   // Text hierarchy
-  textPrimary: '#111827',   // Dark Charcoal / Black
-  textSecondary: '#4B5563', // Slate Medium Gray
-  textMuted: '#9CA3AF',     // Muted Light Slate
+  textPrimary: '#17211F',
+  textSecondary: '#51615D',
+  textMuted: '#73817D',
 
   // Monospace & System fonts
   fontMono: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -60,7 +61,7 @@ export const GLOBAL_STYLES = {
   },
   buttonOutlined: {
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.card,
     borderColor: COLORS.primary,
     borderWidth: 1.5,
     paddingVertical: 12,

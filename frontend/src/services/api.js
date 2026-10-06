@@ -1,19 +1,26 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import safeStorage from '../utils/storage';
 import { Platform } from 'react-native';
 
-// Dynamically handle Web (localhost) vs Physical Phone (LAN IP)
+// Dynamically handle Web (localhost/hostname) vs Physical Phone (LAN IP)
 const LOCAL_IP = '192.168.0.105';
-const BASE_URL = Platform.OS === 'web'
-  ? 'http://localhost:5000/api'
-  : `http://${LOCAL_IP}:5000/api`;
+
+const getBaseUrl = () => {
+  if (Platform.OS === 'web') {
+    const hostname = (typeof window !== 'undefined' && window.location && window.location.hostname)
+      ? window.location.hostname
+      : 'localhost';
+    return `http://${hostname}:5000/api`;
+  }
+  return `http://${LOCAL_IP}:5000/api`;
+};
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getBaseUrl(),
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = await safeStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -73,6 +80,18 @@ export const simulateDistress = async (childId, sensorValues) => {
   });
   return response.data;
 };
+
+export const simulatePanic = async (childId) => {
+  const response = await api.post('/data/panic', { childId });
+  return response.data;
+};
+export const simulateButtonPress = simulatePanic;
+
+export const simulateTamper = async (childId) => {
+  const response = await api.post('/data/tamper', { childId });
+  return response.data;
+};
+export const simulateBandRemoval = simulateTamper;
 
 export const getAllChildren = async () => {
   try {
