@@ -4,15 +4,17 @@ const twilio = require('twilio');
 const sendSMS = async (guardianPhone, childName, sensorValues, alertType = 'distress', location = null) => {
   try {
     const timestamp = new Date().toLocaleString();
-    const mapsLink = location?.lat && location?.lng 
+    const mapsLink = location?.lat != null && location?.lng != null
       ? `https://maps.google.com/?q=${location.lat},${location.lng}`
       : null;
     
     let locString = '';
     if (location?.address) {
-      locString = `\nLocation: ${location.address} (${mapsLink})`;
+      locString = `\nChild location at alert time: ${location.address}${mapsLink ? ` (${mapsLink})` : ''}`;
     } else if (mapsLink) {
-      locString = `\nLocation: ${mapsLink}`;
+      locString = `\nChild location coordinates at alert time: ${location.lat}, ${location.lng} (${mapsLink})`;
+    } else {
+      locString = '\nChild location unavailable.';
     }
 
     let messageBody = '';
