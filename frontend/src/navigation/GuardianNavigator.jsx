@@ -28,9 +28,9 @@ export default function GuardianNavigator() {
         tabBarActiveTintColor: COLORS.mint,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: COLORS.card,
           borderTopWidth: 1,
-          borderTopColor: '#F1F5F9',
+          borderTopColor: COLORS.border,
           elevation: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
