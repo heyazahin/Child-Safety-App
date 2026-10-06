@@ -63,8 +63,13 @@ export default function ChildrenListScreen() {
         title="CHILDREN DIRECTORY" 
         subtitle="Managed student profiles" 
         rightElement={
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Text style={{ color: '#fff', fontSize: 16 }}>＋</Text>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Add child profile"
+          >
+            <Text style={{ color: COLORS.primary, fontSize: 22, fontWeight: '700' }}>＋</Text>
           </TouchableOpacity>
         } 
       />
@@ -148,7 +153,7 @@ export default function ChildrenListScreen() {
                 onPress={handleAddChild}
                 disabled={loading}
               >
-                {loading ? <ActivityIndicator color="#0B132B" size="small" /> : <Text style={GLOBAL_STYLES.buttonText}>SAVE PROFILE</Text>}
+                {loading ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={GLOBAL_STYLES.buttonText}>SAVE PROFILE</Text>}
               </TouchableOpacity>
             </View>
           </View>
