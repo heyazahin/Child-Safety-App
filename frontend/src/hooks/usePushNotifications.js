@@ -21,8 +21,7 @@ export const usePushNotifications = () => {
   const responseListener = useRef();
 
   useEffect(() => {
-    // Only register if the user is actually logged in
-    if (!token) return;
+    if (!token || Platform.OS === 'web') return;
 
     registerForPushNotificationsAsync().then(async (pushToken) => {
       if (pushToken) {
@@ -63,8 +62,8 @@ export const usePushNotifications = () => {
     });
 
     return () => {
-      Notifications.removeNotificationSubscription(notificationListener.current);
-      Notifications.removeNotificationSubscription(responseListener.current);
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, [token]);
 
