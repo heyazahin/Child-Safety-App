@@ -7,19 +7,24 @@ const sendPush = async (fcmToken, childName, alertType = 'distress', location = 
       return false;
     }
     
-    const mapsLink = location?.lat && location?.lng 
+    const mapsLink = location?.lat != null && location?.lng != null
       ? ` https://maps.google.com/?q=${location.lat},${location.lng}`
       : '';
+    const locationText = location?.address
+      ? ` Child location at alert time: ${location.address}.${mapsLink}`
+      : mapsLink
+        ? ` Child location coordinates at alert time: ${location.lat}, ${location.lng}.${mapsLink}`
+        : ' Child location unavailable.';
 
     let title = '⚠️ DISTRESS ALERT';
-    let body = `${childName} may be in distress.${mapsLink}`;
+    let body = `${childName} may be in distress.${locationText}`;
 
     if (alertType === 'panic') {
       title = '🆘 PANIC ALERT';
-      body = `${childName} pressed panic button.${mapsLink}`;
+      body = `${childName} pressed panic button.${locationText}`;
     } else if (alertType === 'tamper') {
       title = '⚡ TAMPER WARNING';
-      body = `Someone is removing ${childName}'s wristband.${mapsLink}`;
+      body = `Someone is removing ${childName}'s wristband.${locationText}`;
     }
 
     const message = {
