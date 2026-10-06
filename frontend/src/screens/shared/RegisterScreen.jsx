@@ -75,7 +75,7 @@ const fStyles = StyleSheet.create({
   },
   fieldHint: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
     marginTop: 4,
     fontStyle: 'italic',
   },
@@ -166,11 +166,13 @@ export default function RegisterScreen({ navigation }) {
     }
   }, [t]);
 
-  const openConsentForm = useCallback(() => {
-    setFormOpened(true);
-    Linking.openURL(CONSENT_FORM_URL).catch(() =>
-      Alert.alert('Error', 'Could not open consent form link')
-    );
+  const openConsentForm = useCallback(async () => {
+    try {
+      await Linking.openURL(CONSENT_FORM_URL);
+      setFormOpened(true);
+    } catch (error) {
+      Alert.alert('Error', 'Could not open consent form link');
+    }
   }, []);
 
   const handleRegister = useCallback(async () => {
@@ -445,7 +447,7 @@ export default function RegisterScreen({ navigation }) {
               disabled={submitting || !consentChecked}
             >
               {submitting
-                ? <ActivityIndicator color="#0B132B" size="small" />
+                ? <ActivityIndicator color="#FFFFFF" size="small" />
                 : <Text style={styles.submitBtnText}>{t('regSubmit')}</Text>
               }
             </TouchableOpacity>
@@ -494,14 +496,14 @@ const styles = StyleSheet.create({
   progressStepWrapper: { flexDirection: 'row', alignItems: 'center' },
   progressDot: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#F1F5F9', borderColor: '#E2E8F0', borderWidth: 2,
+    backgroundColor: COLORS.cardHeader, borderColor: COLORS.border, borderWidth: 2,
     alignItems: 'center', justifyContent: 'center',
   },
-  progressDotActive: { borderColor: COLORS.mint, backgroundColor: '#ECFDF5' },
+  progressDotActive: { borderColor: COLORS.mint, backgroundColor: COLORS.mintBg },
   progressDotDone: { backgroundColor: COLORS.mint, borderColor: COLORS.mint },
-  progressDotText: { fontSize: 12, fontWeight: '800', color: '#9CA3AF' },
+  progressDotText: { fontSize: 12, fontWeight: '800', color: COLORS.textMuted },
   progressDotTextActive: { color: COLORS.mint },
-  progressLine: { width: 36, height: 2, backgroundColor: '#E2E8F0', marginHorizontal: 2 },
+  progressLine: { width: 36, height: 2, backgroundColor: COLORS.border, marginHorizontal: 2 },
   progressLineActive: { backgroundColor: COLORS.mint },
 
   // Header
@@ -518,35 +520,35 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card, borderColor: COLORS.mint, borderWidth: 1.5,
     borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginBottom: 16, borderStyle: 'dashed',
   },
-  locationBtnCaptured: { backgroundColor: '#ECFDF5', borderStyle: 'solid' },
+  locationBtnCaptured: { backgroundColor: COLORS.mintBg, borderStyle: 'solid' },
   locationBtnText: { fontSize: 15, fontWeight: '800', color: COLORS.mint },
-  locationBtnTextCaptured: { color: '#059669' },
+  locationBtnTextCaptured: { color: COLORS.primary },
   mapPreviewCard: { borderRadius: 14, overflow: 'hidden', borderColor: COLORS.border, borderWidth: 1, marginBottom: 16 },
-  mapImage: { width: '100%', height: 150, backgroundColor: '#E2E8F0' },
+  mapImage: { width: '100%', height: 150, backgroundColor: COLORS.border },
   mapCoordsRow: { paddingHorizontal: 14, paddingVertical: 10 },
   mapCoordText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
 
   // Consent
-  consentCard: { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', borderWidth: 1.5, borderRadius: 14, padding: 16, marginBottom: 16 },
-  consentTitle: { fontSize: 16, fontWeight: '900', color: '#065F46', marginBottom: 10 },
-  consentBody: { fontSize: 13, color: '#047857', lineHeight: 20 },
+  consentCard: { backgroundColor: COLORS.mintBg, borderColor: COLORS.secondary, borderWidth: 1.5, borderRadius: 14, padding: 16, marginBottom: 16 },
+  consentTitle: { fontSize: 16, fontWeight: '900', color: COLORS.primary, marginBottom: 10 },
+  consentBody: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
   formLinkBtn: { backgroundColor: COLORS.card, borderColor: COLORS.mint, borderWidth: 1.5, borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
   formLinkBtnText: { fontSize: 14, fontWeight: '800', color: COLORS.mint },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, paddingHorizontal: 4 },
-  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: '#FFFFFF' },
+  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: COLORS.borderHighlight, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: COLORS.card },
   checkboxChecked: { backgroundColor: COLORS.mint, borderColor: COLORS.mint },
   checkMark: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
   checkboxLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 20 },
 
   // Nav buttons
   navRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  backBtn: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14, backgroundColor: '#F1F5F9' },
-  backBtnText: { fontSize: 14, fontWeight: '800', color: '#6B7280' },
+  backBtn: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14, backgroundColor: COLORS.cardHeader },
+  backBtnText: { fontSize: 14, fontWeight: '800', color: COLORS.textSecondary },
   nextBtn: { paddingVertical: 14, paddingHorizontal: 32, borderRadius: 14, backgroundColor: COLORS.mint, elevation: 2 },
-  nextBtnText: { fontSize: 14, fontWeight: '800', color: '#0B132B' },
+  nextBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
   submitBtn: { paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14, backgroundColor: COLORS.mint, elevation: 2 },
   submitBtnDisabled: { opacity: 0.5 },
-  submitBtnText: { fontSize: 14, fontWeight: '800', color: '#0B132B' },
+  submitBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
 
   // Link
   linkButton: { marginTop: 20, marginBottom: 30, alignItems: 'center' },
@@ -554,12 +556,12 @@ const styles = StyleSheet.create({
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalContent: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 18, padding: 20, elevation: 10 },
+  modalContent: { width: '100%', backgroundColor: COLORS.card, borderRadius: 18, padding: 20, elevation: 10 },
   modalTitle: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 14 },
-  modalOption: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 6, backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', borderWidth: 1 },
-  modalOptionActive: { backgroundColor: '#ECFDF5', borderColor: COLORS.mint },
+  modalOption: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 6, backgroundColor: COLORS.background, borderColor: COLORS.border, borderWidth: 1 },
+  modalOptionActive: { backgroundColor: COLORS.mintBg, borderColor: COLORS.mint },
   modalOptionText: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
   modalOptionTextActive: { color: COLORS.mint },
   modalCancel: { marginTop: 10, padding: 10, alignItems: 'center' },
-  modalCancelText: { fontSize: 18, color: '#9CA3AF', fontWeight: '600' },
+  modalCancelText: { fontSize: 18, color: COLORS.textMuted, fontWeight: '600' },
 });
