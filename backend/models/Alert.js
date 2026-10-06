@@ -29,7 +29,9 @@ const alertSchema = new mongoose.Schema({
   location: {
     lat: { type: Number, default: null },
     lng: { type: Number, default: null },
+    capturedAt: { type: Date, default: null },
     address: { type: String, default: null },
+    source: { type: String, enum: ['alert', 'registered'], default: null },
     googleMapsUrl: { type: String, default: null }
   },
   alertMethodsFired: [{
