@@ -45,7 +45,7 @@ export default function TopHeader({ title, subtitle, isDistress = false, rightEl
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   langPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: COLORS.cardHeader,
+    borderColor: COLORS.borderHighlight,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 12,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   langDivider: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     marginHorizontal: 4,
   },
   customRight: {

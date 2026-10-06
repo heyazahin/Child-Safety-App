@@ -6,15 +6,25 @@ import { LanguageContext } from '../context/LanguageContext';
 export default function StatusCard({ status, childName, childAge, lastUpdated }) {
   const { t, language } = useContext(LanguageContext);
 
-  const isDistress = status?.toLowerCase() === 'distress';
-  const isSafe = status?.toLowerCase() === 'safe';
+  const normStatus = (status || 'safe').toLowerCase();
 
-  const accentColor = isDistress ? COLORS.distress : (isSafe ? COLORS.mint : COLORS.amber);
-  const badgeBg = isDistress ? COLORS.distressBg : (isSafe ? COLORS.mintBg : COLORS.amberBg);
+  let accentColor = COLORS.mint;
+  let badgeBg = COLORS.mintBg;
+  let badgeText = `• ${t('statusSafe')}`;
 
-  const badgeText = isDistress 
-    ? `• ${t('statusDistress')}`
-    : (isSafe ? `• ${t('statusSafe')}` : `• ${t('statusOffline')}`);
+  if (normStatus === 'alert' || normStatus === 'typeb' || normStatus === 'panic') {
+    accentColor = '#EF4444';
+    badgeBg = '#FEF2F2';
+    badgeText = language === 'bn' ? '• PANIC — জরুরি বোতাম টিপা হয়েছে' : '• PANIC — Check immediately';
+  } else if (normStatus === 'tamper' || normStatus === 'typec') {
+    accentColor = '#F59E0B';
+    badgeBg = '#FFFBEB';
+    badgeText = language === 'bn' ? '• TEMPER — রিস্টব্যান্ড খোলার সংকেত' : '• Wristband being removed';
+  } else if (normStatus === 'distress' || normStatus === 'typea') {
+    accentColor = '#DC2626';
+    badgeBg = '#FEF2F2';
+    badgeText = language === 'bn' ? '• DISTRESS — বিপদ সংকেত' : '• Distress detected';
+  }
 
   const getInitials = (name) => {
     if (!name) return 'ET';
@@ -27,6 +37,8 @@ export default function StatusCard({ status, childName, childAge, lastUpdated })
     if (mins < 1) return language === 'bn' ? 'এইমাত্র' : 'Just now';
     return language === 'bn' ? `${mins} মিনিট আগে` : `${mins} min ago`;
   };
+
+  const isDistress = normStatus !== 'safe';
 
   return (
     <View style={[styles.card, isDistress && styles.distressCard]}>
@@ -53,8 +65,8 @@ export default function StatusCard({ status, childName, childAge, lastUpdated })
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -70,7 +82,7 @@ const styles = StyleSheet.create({
   },
   distressCard: {
     borderColor: COLORS.distress,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.distressBg,
   },
   leftCol: {
     flexDirection: 'row',
@@ -92,11 +104,11 @@ const styles = StyleSheet.create({
   childName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   updatedText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   badge: {

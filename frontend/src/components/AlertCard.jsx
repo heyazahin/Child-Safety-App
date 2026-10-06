@@ -9,46 +9,75 @@ export default function AlertCard({ alert, onAcknowledge, showGuardianName = fal
   const isAcknowledged = !!alert.acknowledgedAt;
   const severity = alert.severity || 'high';
 
+  const alertType = alert.alertType || 'distress';
+  const isPanic = alertType === 'panic' || alertType === 'typeB';
+  const isTamper = alertType === 'tamper' || alertType === 'typeC';
+
   // Left border accent color matching Figma (red = high, amber = medium, green = low/info)
-  const accentColor =
-    severity === 'high'
-      ? '#EF4444'
-      : severity === 'medium'
-      ? '#F59E0B'
-      : '#10B981';
+  const accentColor = isPanic
+    ? '#EF4444'
+    : isTamper
+    ? '#F59E0B'
+    : severity === 'high'
+    ? COLORS.distress
+    : severity === 'medium'
+    ? COLORS.amber
+    : COLORS.secondary;
 
   // Alert title — bilingual
-  const titleMap = {
-    high: {
-      en: 'Elevated Heart Rate',
-      bn: 'হৃদস্পন্দন বৃদ্ধি পেয়েছে',
-    },
-    medium: {
-      en: 'Unusual Motion Pattern',
-      bn: 'অস্বাভাবিক চলাচল সংকেত',
-    },
-    low: {
-      en: 'Device Connected',
-      bn: 'ডিভাইস সংযুক্ত হয়েছে',
-    },
+  const getTitle = () => {
+    if (isPanic) return language === 'bn' ? 'জরুরি বোতাম টিপা হয়েছে' : 'Emergency Button Pressed';
+    if (isTamper) return language === 'bn' ? 'রিস্টব্যান্ড সরানো হয়েছে' : 'Wristband Removed';
+    const titleMap = {
+      high: { en: 'Unusual Vital Reading', bn: 'হৃদস্পন্দন বৃদ্ধি পেয়েছে' },
+      medium: { en: 'Unusual Motion Pattern', bn: 'অস্বাভাবিক চলাচল সংকেত' },
+      low: { en: 'Device Connected', bn: 'ডিভাইস সংযুক্ত হয়েছে' },
+    };
+    return (titleMap[severity] || titleMap.high)[language] || (titleMap[severity] || titleMap.high).en;
   };
-  const title = (titleMap[severity] || titleMap.high)[language] || (titleMap[severity] || titleMap.high).en;
 
   // Alert description — bilingual
   const getDescription = () => {
-    if (alert.sensorValues) {
+    if (isPanic) {
+      return language === 'bn'
+        ? 'শিশুর রিস্টব্যান্ডের জরুরি বোতাম টিপা হয়েছে। দ্রুত অবস্থান পরীক্ষা করুন।'
+        : 'Emergency button was pressed on child wristband. Check status immediately.';
+    }
+    if (isTamper) {
+      return language === 'bn'
+        ? 'শিশুর রিস্টব্যান্ডটি খোলার বা সরানোর সংকেত পাওয়া গিয়েছে।'
+        : 'Child wristband has been unbuckled or removed. Please verify safety.';
+    }
+    if (alert.sensorValues && alert.sensorValues.heartRate) {
       return language === 'bn'
         ? `হৃদস্পন্দন ${alert.sensorValues.heartRate} bpm-এ পৌঁছেছে। ত্বক পরিবাহিতা বেড়েছে। বর্ধিত মানসিক চাপ শনাক্ত।`
         : `Heart rate spiked to ${alert.sensorValues.heartRate} bpm. GSR skin conductivity spike detected. Child is exhibiting elevated stress.`;
     }
-    if (severity === 'medium') {
-      return language === 'bn'
-        ? 'উচ্চ ত্বরণ নমুনা রেকর্ড করা হয়েছে। ডিভাইস দ্রুত নাড়াচাড়া বা দৌড়ানো শনাক্ত করেছে।'
-        : 'High acceleration pattern recorded. Device registers rapid shaking or running.';
-    }
     return language === 'bn'
-      ? 'ওয়্যারেবল নিরাপদ হ্যান্ডশেক সম্পন্ন। সকল ডেটা স্ট্রিম সফলভাবে চলছে।'
-      : 'Wearable secure handshake complete. All metrics streaming successfully.';
+      ? 'ওয়্যারেবল সেন্সর অস্বাভাবিক সংকেত শনাক্ত করেছে।'
+      : 'Unusual reading detected from child wristband.';
+  };
+
+  const renderBadge = () => {
+    if (isPanic) {
+      return (
+        <View style={[styles.typeBadge, { backgroundColor: '#EF4444' }]}>
+          <Text style={styles.typeBadgeText}>{t('badgeTypeB')}</Text>
+        </View>
+      );
+    }
+    if (isTamper) {
+      return (
+        <View style={[styles.typeBadge, { backgroundColor: '#F59E0B' }]}>
+          <Text style={styles.typeBadgeText}>{t('badgeTypeC')}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.typeBadge, { backgroundColor: '#DC2626' }]}>
+        <Text style={styles.typeBadgeText}>{t('badgeTypeA')}</Text>
+      </View>
+    );
   };
 
   const dateStr = new Date(alert.triggeredAt || Date.now()).toLocaleDateString(undefined, {
@@ -67,9 +96,12 @@ export default function AlertCard({ alert, onAcknowledge, showGuardianName = fal
       <View style={styles.topRow}>
         <View style={styles.titleRow}>
           <View style={[styles.dot, { backgroundColor: accentColor }]} />
-          <Text style={styles.alertTitle}>{title}</Text>
+          <Text style={styles.alertTitle}>{getTitle()}</Text>
         </View>
-        <Text style={styles.timeText}>{timeStr}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          {renderBadge()}
+          <Text style={styles.timeText}>{timeStr}</Text>
+        </View>
       </View>
 
       {/* Optional guardian/child name for admin view */}
@@ -107,8 +139,8 @@ export default function AlertCard({ alert, onAcknowledge, showGuardianName = fal
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderLeftWidth: 4,          // Figma-style colored left accent bar
     borderRadius: 14,
@@ -141,23 +173,23 @@ const styles = StyleSheet.create({
   alertTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#111827',
+    color: COLORS.textPrimary,
     flex: 1,
   },
   timeText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
   },
   childName: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginBottom: 6,
     marginLeft: 16,
   },
   descText: {
     fontSize: 13,
-    color: '#4B5563',
+    color: COLORS.textSecondary,
     lineHeight: 19,
     marginBottom: 12,
     marginLeft: 16,
@@ -167,17 +199,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: COLORS.cardHeader,
     paddingTop: 10,
   },
   dateText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
   },
   ackLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: COLORS.textMuted,
   },
   ackBtn: {
     borderRadius: 10,
@@ -187,6 +219,18 @@ const styles = StyleSheet.create({
   ackBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
+    fontWeight: '800',
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 4,
+    alignSelf: 'flex-end',
+  },
+  typeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
   },
 });
