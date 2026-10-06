@@ -4,7 +4,7 @@ import {
   ActivityIndicator, ScrollView, Modal, Image, Linking
 } from 'react-native';
 import * as Location from 'expo-location';
-import { registerUser } from '../../services/api';
+import { getLocationName, registerUser } from '../../services/api';
 import { COLORS } from '../../theme';
 import { LanguageContext } from '../../context/LanguageContext';
 
@@ -118,6 +118,8 @@ export default function RegisterScreen({ navigation }) {
 
   // Step 3 — Location
   const [homeLocation, setHomeLocation] = useState(null);
+  const [resolvedLocationName, setResolvedLocationName] = useState('');
+  const [locationLookupError, setLocationLookupError] = useState('');
   const homeAddressRef = useRef('');
   const [locLoading, setLocLoading] = useState(false);
 
@@ -158,13 +160,26 @@ export default function RegisterScreen({ navigation }) {
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      setHomeLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      const coordinates = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      setHomeLocation(coordinates);
+      setLocationLookupError('');
+      try {
+        const address = await getLocationName(coordinates);
+        setResolvedLocationName(address);
+        if (!homeAddressRef.current.trim()) homeAddressRef.current = address;
+      } catch (error) {
+        setResolvedLocationName('');
+        setLocationLookupError(language === 'bn'
+          ? 'এলাকার নাম পাওয়া যায়নি। ঠিকানাটি হাতে লিখুন।'
+          : 'Could not resolve the place name. Enter the address manually.');
+        console.warn('Could not resolve registered location name:', error.message);
+      }
     } catch (err) {
       Alert.alert('', t('regLocationFailed'));
     } finally {
       setLocLoading(false);
     }
-  }, [t]);
+  }, [language, t]);
 
   const openConsentForm = useCallback(async () => {
     try {
@@ -196,7 +211,7 @@ export default function RegisterScreen({ navigation }) {
         relationship,
         emergencyContactName: emergencyNameRef.current.trim() || null,
         emergencyContactPhone: emergencyPhoneRef.current.trim() || null,
-        homeAddress: homeAddressRef.current.trim() || null,
+        homeAddress: homeAddressRef.current.trim() || resolvedLocationName || null,
         homeLocation: homeLocation || { lat: null, lng: null },
         consentGiven: true,
       });
@@ -207,7 +222,7 @@ export default function RegisterScreen({ navigation }) {
     } finally {
       setSubmitting(false);
     }
-  }, [consentChecked, relationship, homeLocation, language, t, navigation]);
+  }, [consentChecked, relationship, homeLocation, resolvedLocationName, language, t, navigation]);
 
   // ── Progress bar ──
   const renderProgressBar = () => (
@@ -349,9 +364,15 @@ export default function RegisterScreen({ navigation }) {
           />
           <View style={styles.mapCoordsRow}>
             <Text style={styles.mapCoordText}>
-              📍 {homeLocation.lat.toFixed(5)}, {homeLocation.lng.toFixed(5)}
+              📍 {resolvedLocationName || locationLookupError || (language === 'bn' ? 'ঠিকানার নাম খোঁজা হচ্ছে…' : 'Looking up location name…')}
             </Text>
           </View>
+          <Text style={styles.locationCoordinates}>
+            {homeLocation.lat.toFixed(5)}, {homeLocation.lng.toFixed(5)}
+          </Text>
+          {!!locationLookupError && (
+            <Text style={styles.locationLookupError}>{locationLookupError}</Text>
+          )}
         </View>
       )}
 
@@ -527,6 +548,8 @@ const styles = StyleSheet.create({
   mapImage: { width: '100%', height: 150, backgroundColor: COLORS.border },
   mapCoordsRow: { paddingHorizontal: 14, paddingVertical: 10 },
   mapCoordText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
+  locationCoordinates: { paddingHorizontal: 14, paddingBottom: 8, fontSize: 11, color: COLORS.textMuted },
+  locationLookupError: { paddingHorizontal: 14, paddingBottom: 10, fontSize: 11, color: COLORS.distress },
 
   // Consent
   consentCard: { backgroundColor: COLORS.mintBg, borderColor: COLORS.secondary, borderWidth: 1.5, borderRadius: 14, padding: 16, marginBottom: 16 },
