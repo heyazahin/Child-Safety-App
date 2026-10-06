@@ -158,7 +158,7 @@ export default function GuardianDashboard() {
               />
               <View style={styles.locationInfoRow}>
                 <Text style={styles.locationCoords}>
-                  📍 {user.homeLocation.lat.toFixed(4)}, {user.homeLocation.lng.toFixed(4)}
+                  📍 {user.homeAddress || (language === 'bn' ? 'ঠিকানার নাম পাওয়া যায়নি' : 'Location name unavailable')}
                 </Text>
               </View>
             </View>
