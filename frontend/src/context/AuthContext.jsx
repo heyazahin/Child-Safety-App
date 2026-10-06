@@ -10,24 +10,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkSavedToken();
+    startSignedOut();
   }, []);
 
-  const checkSavedToken = async () => {
+  const startSignedOut = async () => {
     try {
-      const savedToken = await safeStorage.getItem('token');
-      const savedRole = await safeStorage.getItem('role');
-      const savedUser = await safeStorage.getItem('user');
-
-      if (savedToken && savedRole) {
-        setToken(savedToken);
-        setRole(savedRole);
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-      }
+      await Promise.all([
+        safeStorage.removeItem('token'),
+        safeStorage.removeItem('role'),
+        safeStorage.removeItem('user'),
+      ]);
     } catch (error) {
-      console.error('Error loading token from AsyncStorage:', error);
+      console.error('Error clearing saved session:', error);
     } finally {
       setLoading(false);
     }
