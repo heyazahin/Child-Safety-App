@@ -112,6 +112,16 @@ export default function AlertCard({ alert, onAcknowledge, showGuardianName = fal
       {/* Description */}
       <Text style={styles.descText}>{getDescription()}</Text>
 
+      <Text style={styles.locationText}>
+        📍 {alert.location?.source === 'registered'
+          ? (language === 'bn' ? 'শিশুর অবস্থান পাওয়া যায়নি' : 'Child location unavailable')
+          : alert.location?.address
+          ? alert.location.address
+          : alert.location?.lat != null && alert.location?.lng != null
+            ? `${alert.location.lat}, ${alert.location.lng}`
+            : (language === 'bn' ? 'অবস্থান পাওয়া যায়নি' : 'Location unavailable')}
+      </Text>
+
       {/* Bottom row — date + acknowledge */}
       <View style={styles.bottomRow}>
         <Text style={styles.dateText}>{dateStr}</Text>
@@ -191,6 +201,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textSecondary,
     lineHeight: 19,
+    marginBottom: 12,
+    marginLeft: 16,
+  },
+  locationText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
     marginBottom: 12,
     marginLeft: 16,
   },
