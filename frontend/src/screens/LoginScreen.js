@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import safeStorage from '../utils/storage';
 import api from '../api';
 
 export default function LoginScreen({ navigation }) {
@@ -11,8 +11,8 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      await AsyncStorage.setItem('token', response.data.token);
-      await AsyncStorage.setItem('role', response.data.role);
+      await safeStorage.setItem('token', response.data.token);
+      await safeStorage.setItem('role', response.data.role);
       navigation.replace('Dashboard');
     } catch (error) {
       Alert.alert('Login Failed', error.response?.data?.message || 'Check your network and try again');

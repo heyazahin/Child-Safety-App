@@ -9,16 +9,18 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('admin@project.com');
   const [password, setPassword] = useState('AdminPassword123!');
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { login } = useContext(AuthContext);
   const { t, language, changeLanguage } = useContext(LanguageContext);
 
   const handleLogin = async (overrideEmail, overridePassword) => {
+    setErrorMessage('');
     const targetEmail = (overrideEmail || email).trim();
     const targetPassword = overridePassword || password;
 
     if (!targetEmail || !targetPassword) {
-      Alert.alert('Error', language === 'bn' ? 'দয়া করে ইমেইল ও পাসওয়ার্ড প্রদান করুন' : 'Please enter email and password');
+      setErrorMessage(language === 'bn' ? 'দয়া করে ইমেইল ও পাসওয়ার্ড প্রদান করুন' : 'Please enter email and password');
       return;
     }
 
@@ -27,8 +29,16 @@ export default function LoginScreen({ navigation }) {
       const data = await loginUser(targetEmail.toLowerCase(), targetPassword);
       await login(data.token, data.user, data.role);
     } catch (error) {
-      console.error(error);
-      Alert.alert('Login Failed', error.response?.data?.message || 'Unable to connect to server');
+      console.error('Login failed:', error);
+      const msg = error.response?.data?.message 
+        || (error.message === 'Network Error' 
+            ? (language === 'bn' ? 'সার্ভারে সংযোগ করা যাচ্ছে না। ব্যাকএন্ড চালু আছে কিনা পরীক্ষা করুন।' : 'Unable to connect to server. Please ensure backend is running.')
+            : error.message) 
+        || 'Login failed';
+      setErrorMessage(msg);
+      if (typeof Alert !== 'undefined' && Alert.alert) {
+        Alert.alert('Login Failed', msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -92,13 +102,19 @@ export default function LoginScreen({ navigation }) {
         />
       </View>
 
+      {!!errorMessage && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
+        </View>
+      )}
+
       <TouchableOpacity 
         style={GLOBAL_STYLES.button} 
         onPress={() => handleLogin()} 
         disabled={submitting}
       >
         {submitting ? (
-          <ActivityIndicator color="#0B132B" size="small" />
+          <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
           <Text style={GLOBAL_STYLES.buttonText}>{t('loginBtn')}</Text>
         )}
@@ -235,5 +251,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
+  errorBox: {
+    backgroundColor: COLORS.distressBg || '#FEF2F2',
+    borderColor: COLORS.distress || '#EF4444',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+  },
+  errorText: {
+    color: COLORS.distress || '#EF4444',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 });
-

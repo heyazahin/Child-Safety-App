@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   primaryBtnText: {
-    color: '#0B132B',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
   },
