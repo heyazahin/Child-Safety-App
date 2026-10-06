@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { reverseGeocode } = require('../services/geocoding.service');
 
 const router = express.Router();
 
@@ -29,6 +30,11 @@ router.post('/register', async (req, res) => {
     // Role validation — never allow self-promotion to admin via API
     const validRole = role === 'admin' ? 'guardian' : (role || 'guardian');
 
+    let resolvedHomeAddress = homeAddress || null;
+    if (!resolvedHomeAddress && homeLocation && homeLocation.lat && homeLocation.lng) {
+      resolvedHomeAddress = await reverseGeocode(homeLocation.lat, homeLocation.lng);
+    }
+
     const user = new User({
       name,
       email,
@@ -38,7 +44,7 @@ router.post('/register', async (req, res) => {
       relationship: relationship || 'guardian',
       emergencyContactName: emergencyContactName || null,
       emergencyContactPhone: emergencyContactPhone || null,
-      homeAddress: homeAddress || null,
+      homeAddress: resolvedHomeAddress,
       homeLocation: homeLocation || { lat: null, lng: null },
       consentGiven: consentGiven === true,
       consentGivenAt: consentGiven === true ? new Date() : null,
@@ -87,6 +93,21 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
+  }
+});
+
+// Update FCM / Expo Push Token
+const authenticateToken = require('../middleware/auth');
+router.put('/fcm-token', authenticateToken, async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+
+    await User.findByIdAndUpdate(req.user.userId, { fcmToken: token });
+    res.json({ success: true, message: 'Push token updated' });
+  } catch (error) {
+    console.error('Update FCM Token error:', error);
+    res.status(500).json({ message: 'Failed to update push token' });
   }
 });
 

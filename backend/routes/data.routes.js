@@ -7,10 +7,35 @@ const { detectDistress } = require('../services/detection.service');
 const { sendSMS } = require('../services/sms.service');
 const { makeCall } = require('../services/call.service');
 const { sendPush } = require('../services/push.service');
+const { reverseGeocode } = require('../services/geocoding.service');
 const authenticateToken = require('../middleware/auth');
 const authorizeRole = require('../middleware/role');
 
 const router = express.Router();
+
+// Helper to extract location or use dummy location
+const resolveAlertLocation = async (reqBody) => {
+  if (reqBody.location && reqBody.location.lat && reqBody.location.lng) {
+    const address = await reverseGeocode(reqBody.location.lat, reqBody.location.lng);
+    return {
+      lat: reqBody.location.lat,
+      lng: reqBody.location.lng,
+      address: address,
+      googleMapsUrl: `https://www.google.com/maps?q=${reqBody.location.lat},${reqBody.location.lng}`
+    };
+  }
+  // Default to a central location in Dhaka for testing if not provided
+  const dummyLat = 23.8103;
+  const dummyLng = 90.4125;
+  const dummyAddress = await reverseGeocode(dummyLat, dummyLng) || 'Dhaka, Bangladesh';
+  
+  return {
+    lat: dummyLat,
+    lng: dummyLng,
+    address: dummyAddress,
+    googleMapsUrl: `https://www.google.com/maps?q=${dummyLat},${dummyLng}`
+  };
+};
 
 // 1. Ingest Data (Admin / Device)
 router.post('/ingest', authenticateToken, authorizeRole('admin'), async (req, res) => {
@@ -30,16 +55,19 @@ router.post('/ingest', authenticateToken, authorizeRole('admin'), async (req, re
 
     const reading = new Reading({
       childId, heartRate, gsr, respiration, motionLevel,
-      source: source || 'simulate', timestamp: now
+      source: source || 'simulate', alertType: 'distress', timestamp: now
     });
     await reading.save();
 
     const distressDetected = detectDistress(reading);
 
     if (distressDetected) {
+      const alertLoc = await resolveAlertLocation(req.body);
+
       const alert = new Alert({
-        childId, triggeredAt: now, severity: 'high',
+        childId, triggeredAt: now, severity: 'high', alertType: 'distress',
         sensorValues: { heartRate, gsr, respiration, motionLevel },
+        location: alertLoc,
         alertMethodsFired: []
       });
       
@@ -54,9 +82,9 @@ router.post('/ingest', authenticateToken, authorizeRole('admin'), async (req, re
             const childName = child.name;
 
             const results = await Promise.allSettled([
-              sendSMS(phone, childName, alert.sensorValues),
+              sendSMS(phone, childName, alert.sensorValues, 'distress', alertLoc),
               makeCall(phone, childName),
-              sendPush(fcmToken, childName)
+              sendPush(fcmToken, childName, 'distress', alertLoc)
             ]);
 
             if (results[0].status === 'fulfilled' && results[0].value) {
@@ -90,6 +118,154 @@ router.post('/ingest', authenticateToken, authorizeRole('admin'), async (req, re
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// Panic Button Alert (panic)
+const handlePanic = async (req, res) => {
+  try {
+    let { childId } = req.body;
+    const mongoose = require('mongoose');
+
+    if (!childId || !mongoose.Types.ObjectId.isValid(childId)) {
+      const firstChild = await Child.findOne();
+      if (!firstChild) return res.status(404).json({ error: 'Child not found' });
+      childId = firstChild._id;
+    }
+
+    const child = await Child.findById(childId);
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+
+    const now = new Date();
+
+    const reading = new Reading({
+      childId,
+      heartRate: 135,
+      gsr: 0.9,
+      respiration: 24,
+      motionLevel: 'high',
+      source: 'simulate',
+      alertType: 'panic',
+      timestamp: now
+    });
+    await reading.save();
+
+    const alertLoc = await resolveAlertLocation(req.body);
+
+    const alert = new Alert({
+      childId,
+      triggeredAt: now,
+      severity: 'high',
+      alertType: 'panic',
+      sensorValues: { heartRate: 135, gsr: 0.9, respiration: 24, motionLevel: 'high' },
+      location: alertLoc,
+      alertMethodsFired: []
+    });
+
+    const methodsFired = [];
+    if (child.linkedGuardianIds && child.linkedGuardianIds.length > 0) {
+      for (const guardianId of child.linkedGuardianIds) {
+        const guardian = await User.findById(guardianId);
+        if (guardian && guardian.phone) {
+          const results = await Promise.allSettled([
+            sendSMS(guardian.phone, child.name, alert.sensorValues, 'panic', alertLoc),
+            makeCall(guardian.phone, child.name),
+            sendPush(guardian.fcmToken, child.name, 'panic', alertLoc)
+          ]);
+          if (results[0].status === 'fulfilled' && results[0].value) methodsFired.push('sms');
+          if (results[1].status === 'fulfilled' && results[1].value) methodsFired.push('call');
+          if (results[2].status === 'fulfilled' && results[2].value) methodsFired.push('push');
+        }
+      }
+    }
+
+    alert.alertMethodsFired = methodsFired;
+    await alert.save();
+
+    child.currentStatus = 'distress';
+    child.lastReadingAt = now;
+    await child.save();
+
+    res.json({ received: true, alertType: 'panic', childId, timestamp: now.toISOString() });
+  } catch (error) {
+    console.error('Panic Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+router.post('/panic', authenticateToken, handlePanic);
+router.post('/buttonpress', authenticateToken, handlePanic);
+
+// Tamper Detection Warning (tamper)
+const handleTamper = async (req, res) => {
+  try {
+    let { childId } = req.body;
+    const mongoose = require('mongoose');
+
+    if (!childId || !mongoose.Types.ObjectId.isValid(childId)) {
+      const firstChild = await Child.findOne();
+      if (!firstChild) return res.status(404).json({ error: 'Child not found' });
+      childId = firstChild._id;
+    }
+
+    const child = await Child.findById(childId);
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+
+    const now = new Date();
+
+    const reading = new Reading({
+      childId,
+      heartRate: 0,
+      gsr: 0,
+      respiration: 0,
+      motionLevel: 'low',
+      source: 'simulate',
+      alertType: 'tamper',
+      timestamp: now
+    });
+    await reading.save();
+
+    const alertLoc = await resolveAlertLocation(req.body);
+
+    const alert = new Alert({
+      childId,
+      triggeredAt: now,
+      severity: 'medium',
+      alertType: 'tamper',
+      sensorValues: { heartRate: 0, gsr: 0, respiration: 0, motionLevel: 'low' },
+      location: alertLoc,
+      alertMethodsFired: []
+    });
+
+    const methodsFired = [];
+    if (child.linkedGuardianIds && child.linkedGuardianIds.length > 0) {
+      for (const guardianId of child.linkedGuardianIds) {
+        const guardian = await User.findById(guardianId);
+        if (guardian && guardian.phone) {
+          const results = await Promise.allSettled([
+            sendSMS(guardian.phone, child.name, alert.sensorValues, 'tamper', alertLoc),
+            makeCall(guardian.phone, child.name, 'tamper'),
+            sendPush(guardian.fcmToken, child.name, 'tamper', alertLoc)
+          ]);
+          if (results[0].status === 'fulfilled' && results[0].value) methodsFired.push('sms');
+          if (results[1].status === 'fulfilled' && results[1].value) methodsFired.push('call');
+          if (results[2].status === 'fulfilled' && results[2].value) methodsFired.push('push');
+        }
+      }
+    }
+
+    alert.alertMethodsFired = methodsFired;
+    await alert.save();
+
+    child.currentStatus = 'tamper';
+    child.lastReadingAt = now;
+    await child.save();
+
+    res.json({ received: true, alertType: 'tamper', childId, timestamp: now.toISOString() });
+  } catch (error) {
+    console.error('Tamper Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+router.post('/tamper', authenticateToken, handleTamper);
+router.post('/bandremoval', authenticateToken, handleTamper);
 
 // 2. Get All Children
 router.get('/children', authenticateToken, async (req, res) => {
@@ -144,6 +320,19 @@ router.get('/my-child', authenticateToken, async (req, res) => {
 router.get('/latest/:childId', authenticateToken, async (req, res) => {
   try {
     const { childId } = req.params;
+    const mongoose = require('mongoose');
+    if (!childId || !mongoose.Types.ObjectId.isValid(childId)) {
+      return res.json({
+        child: null,
+        latestReading: {
+          heartRate: 75,
+          gsr: 0.35,
+          respiration: 16,
+          motionLevel: 'medium',
+          timestamp: new Date()
+        }
+      });
+    }
     const reading = await Reading.findOne({ childId }).sort({ timestamp: -1 });
     const child = await Child.findById(childId);
     
@@ -175,6 +364,10 @@ router.get('/alerts', authenticateToken, async (req, res) => {
 router.get('/alerts/:childId', authenticateToken, async (req, res) => {
   try {
     const { childId } = req.params;
+    const mongoose = require('mongoose');
+    if (!childId || !mongoose.Types.ObjectId.isValid(childId)) {
+      return res.json([]);
+    }
     const alerts = await Alert.find({ childId }).populate('childId', 'name').sort({ triggeredAt: -1 });
     res.json(alerts);
   } catch (error) {
