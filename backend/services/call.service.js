@@ -1,7 +1,7 @@
 const twilio = require('twilio');
 const { makeSim800Call } = require('./sim800l.service');
 
-const makeCall = async (guardianPhone, childName, alertType = 'distress') => {
+const makeCall = async (guardianPhone, childName, alertType = 'distress', location = null) => {
   try {
     // 1. Primary Call Mechanism: SIM800L Hardware
     const simResult = await makeSim800Call(guardianPhone);
@@ -28,6 +28,11 @@ const makeCall = async (guardianPhone, childName, alertType = 'distress') => {
       message = `Emergency Panic Alert! Your child ${childName} pressed the panic button on their wristband. Please respond immediately.`;
     } else if (alertType === 'tamper') {
       message = `Tamper Warning! Someone is removing your child ${childName}'s wristband. Please check immediately.`;
+    }
+    if (location?.address) {
+      message += ` The child's location at the time of the alert was ${location.address}.`;
+    } else if (location?.lat != null && location?.lng != null) {
+      message += ` The child's location coordinates are latitude ${location.lat}, longitude ${location.lng}.`;
     }
     
     // TwiML for speech synthesis
