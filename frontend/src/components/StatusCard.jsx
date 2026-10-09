@@ -6,13 +6,17 @@ import { LanguageContext } from '../context/LanguageContext';
 export default function StatusCard({ status, childName, childAge, lastUpdated }) {
   const { t, language } = useContext(LanguageContext);
 
-  const normStatus = (status || 'safe').toLowerCase();
+  const normStatus = (status || 'offline').toLowerCase();
 
   let accentColor = COLORS.mint;
   let badgeBg = COLORS.mintBg;
   let badgeText = `• ${t('statusSafe')}`;
 
-  if (normStatus === 'alert' || normStatus === 'typeb' || normStatus === 'panic') {
+  if (normStatus === 'offline') {
+    accentColor = COLORS.textMuted;
+    badgeBg = COLORS.cardHeader;
+    badgeText = `• ${t('statusOffline')}`;
+  } else if (normStatus === 'alert' || normStatus === 'typeb' || normStatus === 'panic') {
     accentColor = '#EF4444';
     badgeBg = '#FEF2F2';
     badgeText = language === 'bn' ? '• PANIC — জরুরি বোতাম টিপা হয়েছে' : '• PANIC — Check immediately';
@@ -32,13 +36,14 @@ export default function StatusCard({ status, childName, childAge, lastUpdated })
   };
 
   const getTimeAgo = () => {
-    if (!lastUpdated) return language === 'bn' ? 'সম্প্রতি' : '2 min ago';
+    if (!lastUpdated) return language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings yet';
     const mins = Math.floor((new Date() - new Date(lastUpdated)) / 60000);
     if (mins < 1) return language === 'bn' ? 'এইমাত্র' : 'Just now';
     return language === 'bn' ? `${mins} মিনিট আগে` : `${mins} min ago`;
   };
 
-  const isDistress = normStatus !== 'safe';
+  const isDistress = normStatus === 'distress' || normStatus === 'alert' ||
+    normStatus === 'panic' || normStatus === 'tamper';
 
   return (
     <View style={[styles.card, isDistress && styles.distressCard]}>
@@ -49,7 +54,7 @@ export default function StatusCard({ status, childName, childAge, lastUpdated })
           </Text>
         </View>
         <View style={styles.infoCol}>
-          <Text style={styles.childName}>{childName || 'Emma T.'}</Text>
+          <Text style={styles.childName}>{childName}</Text>
           <Text style={styles.updatedText}>
             {language === 'bn' ? 'হালনাগাদ:' : 'Last updated:'} {getTimeAgo()}
           </Text>

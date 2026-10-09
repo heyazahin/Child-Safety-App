@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { Platform, Vibration, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { AuthContext } from '../context/AuthContext';
@@ -38,21 +38,7 @@ export const usePushNotifications = () => {
 
     // 1. FOREGROUND LISTENER (Fires when app is open)
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      const alertType = notification.request.content.data?.alertType;
       console.log('🔔 Foreground Notification Received!', notification);
-
-      // Heavily vibrate the phone if it's a distress/panic/tamper alert
-      if (['distress', 'panic', 'tamper'].includes(alertType)) {
-        Vibration.vibrate([0, 500, 200, 500, 200, 500]);
-        // Also show an in-app alert dialog to force the user to see it
-        Alert.alert(
-          notification.request.content.title || "Emergency",
-          notification.request.content.body || "Please check the dashboard immediately."
-        );
-      } else {
-        // Standard notification vibration
-        Vibration.vibrate();
-      }
     });
 
     // 2. RESPONSE LISTENER (Fires when user taps a notification)
@@ -78,7 +64,9 @@ async function registerForPushNotificationsAsync() {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
+      sound: 'default',
+      enableVibrate: true,
+      vibrationPattern: [0, 500, 200, 500],
       lightColor: '#FF231F7C',
     });
   }

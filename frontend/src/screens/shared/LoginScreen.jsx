@@ -68,9 +68,6 @@ export default function LoginScreen({ navigation }) {
       </View>
 
       <View style={styles.logoRow}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoIcon}>🛡️</Text>
-        </View>
         <Text style={styles.logoText}>{t('appName')}</Text>
       </View>
 
@@ -172,24 +169,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 16,
-  },
-  logoBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: COLORS.mintBg,
-    borderColor: COLORS.mint,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  logoIcon: {
-    fontSize: 20,
   },
   logoText: {
     fontSize: 22,

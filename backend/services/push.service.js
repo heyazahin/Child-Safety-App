@@ -30,6 +30,8 @@ const sendPush = async (fcmToken, childName, alertType = 'distress', location = 
     const message = {
       to: fcmToken,
       sound: 'default',
+      channelId: 'default',
+      priority: 'high',
       title: title,
       body: body,
       data: { alertType, location },

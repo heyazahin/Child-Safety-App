@@ -58,7 +58,16 @@ export const translations = {
     bangla: 'বাংলা',
     guardianSettings: 'Guardian Preferences',
     pushNotifications: 'Push Alert Notifications',
+    alertPreferences: 'Alert Preferences',
+    pushDescription: 'Send push notifications for child safety alerts',
+    smsAlerts: 'SMS Emergency Alerts',
+    smsDescription: 'Send emergency alerts by SMS when enabled',
     autoCall: 'Automatic Emergency Calling',
+    callDescription: 'Place an automated call for child safety alerts',
+    alertPreferencesLoadError: 'Could not load your alert preferences.',
+    alertPreferencesSaveError: 'Could not save your alert preference. Please try again.',
+    noLinkedChild: 'No child linked',
+    schoolNotProvided: 'School not provided',
     emergencyPhone: 'Emergency Phone Number',
 
     // Admin Labels
@@ -203,7 +212,16 @@ export const translations = {
     bangla: 'বাংলা',
     guardianSettings: 'অভিভাবক সেটিংস',
     pushNotifications: 'জরুরি নোটিফিকেশন এলার্ট',
+    alertPreferences: 'জরুরি সংকেতের পছন্দ',
+    pushDescription: 'শিশুর নিরাপত্তা সংকেতে পুশ নোটিফিকেশন পাঠান',
+    smsAlerts: 'জরুরি SMS সংকেত',
+    smsDescription: 'চালু থাকলে SMS-এ জরুরি সংকেত পাঠান',
     autoCall: 'স্বয়ংক্রিয় জরুরি ফোন কল',
+    callDescription: 'শিশুর নিরাপত্তা সংকেতে স্বয়ংক্রিয় ফোন কল করুন',
+    alertPreferencesLoadError: 'জরুরি সংকেতের পছন্দ লোড করা যায়নি।',
+    alertPreferencesSaveError: 'জরুরি সংকেতের পছন্দ সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।',
+    noLinkedChild: 'কোনো শিশু লিংক করা নেই',
+    schoolNotProvided: 'স্কুলের তথ্য নেই',
     emergencyPhone: 'জরুরি মোবাইল নম্বর',
 
     // Admin Labels

@@ -70,6 +70,11 @@ const userSchema = new mongoose.Schema({
   },
   fcmToken: {
     type: String
+  },
+  alertPreferences: {
+    push: { type: Boolean, default: true },
+    sms: { type: Boolean, default: true },
+    call: { type: Boolean, default: false }
   }
 }, { timestamps: true });
 

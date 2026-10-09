@@ -1,24 +1,53 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert, ActivityIndicator } from 'react-native';
 import TopHeader from '../../components/TopHeader';
 import { AuthContext } from '../../context/AuthContext';
 import { LanguageContext } from '../../context/LanguageContext';
-import { getMyChild } from '../../services/api';
+import { getAlertPreferences, getMyChild, updateAlertPreferences } from '../../services/api';
 import { COLORS } from '../../theme';
 
 export default function GuardianSettingsScreen() {
   const { user, logout } = useContext(AuthContext);
   const { t, language, changeLanguage } = useContext(LanguageContext);
   const [child, setChild] = useState(null);
-
-  // Preference Toggle States matching Figma
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [smsEnabled, setSmsEnabled] = useState(true);
-  const [callEnabled, setCallEnabled] = useState(false);
+  const [alertPreferences, setAlertPreferences] = useState({ push: true, sms: true, call: false });
+  const [preferencesLoading, setPreferencesLoading] = useState(true);
+  const [savingPreference, setSavingPreference] = useState(false);
 
   useEffect(() => {
     getMyChild().then(setChild).catch(console.error);
-  }, []);
+    getAlertPreferences()
+      .then(setAlertPreferences)
+      .catch(error => {
+        console.error('Could not load alert preferences:', error);
+        Alert.alert(
+          t('alertPreferences'),
+          error.response?.data?.message || t('alertPreferencesLoadError')
+        );
+      })
+      .finally(() => setPreferencesLoading(false));
+  }, [t]);
+
+  const savePreference = async (key, value) => {
+    if (savingPreference || preferencesLoading) return;
+    const previousPreferences = alertPreferences;
+    const nextPreferences = { ...previousPreferences, [key]: value };
+    setAlertPreferences(nextPreferences);
+    setSavingPreference(true);
+
+    try {
+      setAlertPreferences(await updateAlertPreferences(nextPreferences));
+    } catch (error) {
+      console.error('Could not save alert preferences:', error);
+      setAlertPreferences(previousPreferences);
+      Alert.alert(
+        t('alertPreferences'),
+        error.response?.data?.message || t('alertPreferencesSaveError')
+      );
+    } finally {
+      setSavingPreference(false);
+    }
+  };
 
   const getInitials = (name) => {
     if (!name) return 'ST';
@@ -95,18 +124,19 @@ export default function GuardianSettingsScreen() {
         </View>
 
         {/* Alert Preferences Section matching Figma guardian-settings */}
-        <Text style={styles.sectionTitle}>ALERT PREFERENCES</Text>
+        <Text style={styles.sectionTitle}>{t('alertPreferences').toUpperCase()}</Text>
 
         <View style={styles.cardBox}>
           {/* Push Notifications Switch */}
           <View style={styles.switchRow}>
             <View style={styles.switchInfo}>
-              <Text style={styles.switchTitle}>Push Notifications</Text>
-              <Text style={styles.switchSub}>Immediate distress & anomaly alerts</Text>
+              <Text style={styles.switchTitle}>{t('pushNotifications')}</Text>
+              <Text style={styles.switchSub}>{t('pushDescription')}</Text>
             </View>
             <Switch
-              value={pushEnabled}
-              onValueChange={setPushEnabled}
+              value={alertPreferences.push}
+              onValueChange={value => savePreference('push', value)}
+              disabled={preferencesLoading || savingPreference}
               trackColor={{ false: COLORS.border, true: COLORS.mint }}
               thumbColor={COLORS.card}
             />
@@ -117,12 +147,13 @@ export default function GuardianSettingsScreen() {
           {/* SMS Emergency Alerts Switch */}
           <View style={styles.switchRow}>
             <View style={styles.switchInfo}>
-              <Text style={styles.switchTitle}>SMS Emergency Alerts</Text>
-              <Text style={styles.switchSub}>Backup SMS triggers when offline</Text>
+              <Text style={styles.switchTitle}>{t('smsAlerts')}</Text>
+              <Text style={styles.switchSub}>{t('smsDescription')}</Text>
             </View>
             <Switch
-              value={smsEnabled}
-              onValueChange={setSmsEnabled}
+              value={alertPreferences.sms}
+              onValueChange={value => savePreference('sms', value)}
+              disabled={preferencesLoading || savingPreference}
               trackColor={{ false: COLORS.border, true: COLORS.mint }}
               thumbColor={COLORS.card}
             />
@@ -133,16 +164,20 @@ export default function GuardianSettingsScreen() {
           {/* Emergency Call Route Switch */}
           <View style={styles.switchRow}>
             <View style={styles.switchInfo}>
-              <Text style={styles.switchTitle}>Emergency Call Route</Text>
-              <Text style={styles.switchSub}>Automated SOS phone sequence</Text>
+              <Text style={styles.switchTitle}>{t('autoCall')}</Text>
+              <Text style={styles.switchSub}>{t('callDescription')}</Text>
             </View>
             <Switch
-              value={callEnabled}
-              onValueChange={setCallEnabled}
+              value={alertPreferences.call}
+              onValueChange={value => savePreference('call', value)}
+              disabled={preferencesLoading || savingPreference}
               trackColor={{ false: COLORS.border, true: COLORS.mint }}
               thumbColor={COLORS.card}
             />
           </View>
+          {(preferencesLoading || savingPreference) && (
+            <ActivityIndicator style={styles.preferenceLoader} color={COLORS.mint} />
+          )}
         </View>
 
         {/* Linked Monitor Section matching Figma */}
@@ -153,9 +188,9 @@ export default function GuardianSettingsScreen() {
             <Text style={styles.watchIcon}>⌚</Text>
           </View>
           <View style={styles.linkedInfo}>
-            <Text style={styles.linkedName}>{child?.name || 'Emma T.'}</Text>
+            <Text style={styles.linkedName}>{child?.name || t('noLinkedChild')}</Text>
             <Text style={styles.linkedDetail}>
-              {child?.school || 'Grade 3 • Lincoln Elementary'}
+              {child?.school || (child ? t('schoolNotProvided') : '')}
             </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -311,6 +346,9 @@ const styles = StyleSheet.create({
   rowDivider: {
     height: 1,
     backgroundColor: COLORS.cardHeader,
+  },
+  preferenceLoader: {
+    marginBottom: 12,
   },
   linkedCard: {
     flexDirection: 'row',

@@ -27,14 +27,15 @@ const notifyAlertRecipients = async (child, alertType, sensorValues, location) =
 
   await Promise.all([...recipients.values()].map(async (recipient) => {
     const isGuardian = recipient.role === 'guardian';
+    const preferences = recipient.alertPreferences || {};
     const results = await Promise.allSettled([
-      isGuardian && recipient.phone
+      isGuardian && recipient.phone && (preferences.sms ?? true)
         ? sendSMS(recipient.phone, child.name, sensorValues, alertType, location)
         : Promise.resolve(false),
-      isGuardian && recipient.phone
+      isGuardian && recipient.phone && (preferences.call ?? false)
         ? makeCall(recipient.phone, child.name, alertType, location)
         : Promise.resolve(false),
-      recipient.fcmToken
+      recipient.fcmToken && (preferences.push ?? true)
         ? sendPush(recipient.fcmToken, child.name, alertType, location)
         : Promise.resolve(false)
     ]);
@@ -303,10 +304,7 @@ router.post('/children', authenticateToken, async (req, res) => {
 // 4. Get Guardian's Linked Child
 router.get('/my-child', authenticateToken, async (req, res) => {
   try {
-    let child = await Child.findOne({ linkedGuardianIds: req.user.userId });
-    if (!child) {
-      child = await Child.findOne();
-    }
+    const child = await Child.findOne({ linkedGuardianIds: req.user.userId });
     if (!child) {
       return res.status(404).json({ error: 'No child found' });
     }
@@ -316,35 +314,65 @@ router.get('/my-child', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/readings/:childId', authenticateToken, async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const { childId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(childId)) {
+      return res.status(400).json({ message: 'Valid child ID is required' });
+    }
+
+    const childQuery = { _id: childId };
+    if (req.user.role === 'guardian') {
+      childQuery.linkedGuardianIds = req.user.userId;
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to view readings' });
+    }
+
+    const child = await Child.findOne(childQuery).select('_id');
+    if (!child) {
+      return res.status(404).json({ message: 'Linked child not found' });
+    }
+
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isInteger(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 50)
+      : 20;
+    const readings = await Reading.find({ childId })
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .lean();
+
+    res.json(readings.reverse());
+  } catch (error) {
+    console.error('Failed to fetch reading history:', error);
+    res.status(500).json({ message: 'Failed to fetch reading history' });
+  }
+});
+
 // 5. Get Latest Reading for a Child
 router.get('/latest/:childId', authenticateToken, async (req, res) => {
   try {
     const { childId } = req.params;
     const mongoose = require('mongoose');
-    if (!childId || !mongoose.Types.ObjectId.isValid(childId)) {
-      return res.json({
-        child: null,
-        latestReading: {
-          heartRate: 75,
-          gsr: 0.35,
-          respiration: 16,
-          motionLevel: 'medium',
-          timestamp: new Date()
-        }
-      });
+    if (!mongoose.Types.ObjectId.isValid(childId)) {
+      return res.status(400).json({ message: 'Valid child ID is required' });
     }
+
+    const childQuery = { _id: childId };
+    if (req.user.role === 'guardian') {
+      childQuery.linkedGuardianIds = req.user.userId;
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to view readings' });
+    }
+
+    const child = await Child.findOne(childQuery);
+    if (!child) return res.status(404).json({ message: 'Linked child not found' });
     const reading = await Reading.findOne({ childId }).sort({ timestamp: -1 });
-    const child = await Child.findById(childId);
     
     res.json({
       child,
-      latestReading: reading || {
-        heartRate: 75,
-        gsr: 0.35,
-        respiration: 16,
-        motionLevel: 'medium',
-        timestamp: new Date()
-      }
+      latestReading: reading
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch reading' });
@@ -354,9 +382,20 @@ router.get('/latest/:childId', authenticateToken, async (req, res) => {
 // 6. Get Alerts (All or by childId)
 router.get('/alerts', authenticateToken, async (req, res) => {
   try {
-    const alerts = await Alert.find().populate('childId', 'name').sort({ triggeredAt: -1 });
+    let childFilter = {};
+    if (req.user.role === 'guardian') {
+      const linkedChildren = await Child.find({ linkedGuardianIds: req.user.userId }).select('_id');
+      childFilter = { childId: { $in: linkedChildren.map(child => child._id) } };
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to view alerts' });
+    }
+
+    const alertsQuery = Alert.find(childFilter).populate('childId', 'name').sort({ triggeredAt: -1 });
+    if (req.query.recent === 'true') alertsQuery.limit(25);
+    const alerts = await alertsQuery;
     res.json(alerts);
   } catch (error) {
+    console.error('Failed to fetch alerts:', error);
     res.status(500).json({ error: 'Failed to fetch alerts' });
   }
 });

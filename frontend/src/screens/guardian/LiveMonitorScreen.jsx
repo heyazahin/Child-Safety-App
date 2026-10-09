@@ -1,25 +1,26 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import TopHeader from '../../components/TopHeader';
-import { getMyChild, getLatestReading } from '../../services/api';
+import VitalsTrend from '../../components/VitalsTrend';
+import { getMyChild, getReadingHistory } from '../../services/api';
 import { COLORS } from '../../theme';
 import { LanguageContext } from '../../context/LanguageContext';
 
 export default function LiveMonitorScreen() {
   const { t, language } = useContext(LanguageContext);
   const [child, setChild] = useState(null);
-  const [reading, setReading] = useState(null);
+  const [readings, setReadings] = useState([]);
+  const [loadError, setLoadError] = useState('');
 
   const fetchLiveReading = async () => {
     try {
       const childData = await getMyChild();
       setChild(childData);
-      if (childData && childData._id) {
-        const readingData = await getLatestReading(childData._id);
-        setReading(readingData.latestReading);
-      }
+      setReadings(await getReadingHistory(childData._id));
+      setLoadError('');
     } catch (error) {
       console.error('Error polling live reading:', error);
+      setLoadError(error.response?.data?.error || error.message || 'Could not load sensor readings.');
     }
   };
 
@@ -29,71 +30,89 @@ export default function LiveMonitorScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const isDistress = child?.currentStatus?.toLowerCase() === 'distress';
+  const isDistress = ['distress', 'tamper', 'alert'].includes(child?.currentStatus?.toLowerCase());
+  const reading = readings[readings.length - 1] || null;
 
   return (
     <View style={styles.screen}>
       <TopHeader
         title={t('tabMonitor')}
-        subtitle={language === 'bn' ? 'প্রতি ৫ সেকেন্ডে লাইভ রিডিং' : 'Real-time 5s vitals stream'}
+        subtitle={language === 'bn' ? 'প্রতি ৫ সেকেন্ডে সেন্সর রিডিং আপডেট' : 'Sensor readings refresh every 5 seconds'}
         isDistress={isDistress}
-        badge={
-          <View style={styles.liveStreamBadge}>
-            <Text style={styles.liveStreamBadgeText}>• LIVE STREAM</Text>
-          </View>
-        }
       />
 
       <ScrollView contentContainerStyle={styles.container}>
-        {/* ECG Hero Card matching Figma live-monitor frame */}
+        {!!loadError && <Text style={styles.errorText}>{loadError}</Text>}
+        {!child && !loadError && (
+          <Text style={styles.emptyText}>
+            {language === 'bn' ? 'আপনার অ্যাকাউন্টে কোনো শিশু লিংক করা নেই।' : 'No child is linked to your account.'}
+          </Text>
+        )}
+        {child && readings.length === 0 && !loadError && (
+          <Text style={styles.emptyText}>
+            {language === 'bn' ? 'এখনও কোনো সেন্সর রিডিং পাওয়া যায়নি।' : 'No sensor readings have been received yet.'}
+          </Text>
+        )}
+
         <View style={styles.ecgCard}>
           <View style={styles.ecgHeader}>
             <View>
-              <Text style={styles.ecgTitle}>REALTIME_ECG_HR</Text>
-              <Text style={styles.ecgSub}>{child?.name || 'Emma T.'} Vitals Stream</Text>
+              <Text style={styles.ecgTitle}>HEART RATE HISTORY</Text>
+              <Text style={styles.ecgSub}>{child?.name || '—'} · {readings.length} readings</Text>
             </View>
             <View style={styles.bpmRow}>
-              <Text style={styles.bpmNumber}>{reading?.heartRate || 72}</Text>
+              <Text style={styles.bpmNumber}>{reading?.heartRate ?? '—'}</Text>
               <Text style={styles.bpmUnit}>BPM</Text>
             </View>
           </View>
 
-          {/* ECG Wave Line Graphic */}
-          <View style={styles.graphBox}>
-            <View style={styles.graphWaveLine} />
-          </View>
+          <VitalsTrend
+            readings={readings}
+            field="heartRate"
+            height={80}
+            emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+          />
+          <Text style={styles.updatedAt}>
+            {reading?.timestamp
+              ? `${language === 'bn' ? 'সর্বশেষ রিডিং:' : 'Latest reading:'} ${new Date(reading.timestamp).toLocaleString()}`
+              : language === 'bn' ? 'সর্বশেষ রিডিং নেই' : 'No latest reading'}
+          </Text>
         </View>
 
-        {/* Side-by-Side Vitals Row matching Figma */}
         <View style={styles.sideBySideRow}>
           <View style={styles.sideCard}>
             <Text style={styles.cardLabel}>GALVANIC_SKIN</Text>
-            <Text style={styles.cardVal}>{reading?.gsr || 4.2} μS</Text>
-            <View style={styles.pillNormal}>
-              <Text style={styles.pillNormalText}>{t('normal')}</Text>
-            </View>
+            <Text style={styles.cardVal}>{reading?.gsr ?? '—'} μS</Text>
+            <VitalsTrend
+              readings={readings}
+              field="gsr"
+              height={64}
+              emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+            />
           </View>
 
           <View style={styles.sideCard}>
             <Text style={styles.cardLabel}>RESPIRATION</Text>
-            <Text style={styles.cardVal}>{reading?.respiration || 16} br/min</Text>
-            <View style={styles.pillNormal}>
-              <Text style={styles.pillNormalText}>{t('normal')}</Text>
-            </View>
+            <Text style={styles.cardVal}>{reading?.respiration ?? '—'} br/min</Text>
+            <VitalsTrend
+              readings={readings}
+              field="respiration"
+              height={64}
+              emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+            />
           </View>
         </View>
 
-        {/* Motion State Card matching Figma */}
         <View style={styles.motionCard}>
           <View>
             <Text style={styles.motionLabel}>BODY_MOTION</Text>
             <Text style={styles.motionVal}>
-              {language === 'bn' ? 'শান্ত — উপবিষ্ট' : 'Calm — Seated'}
+              {reading?.motionLevel ? t(reading.motionLevel) : '—'}
             </Text>
           </View>
-          <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>LIVE</Text>
-          </View>
+          <Text style={styles.updatedAt}>
+            {reading?.timestamp ? new Date(reading.timestamp).toLocaleTimeString() : 'No data'}
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -103,19 +122,8 @@ export default function LiveMonitorScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   container: { padding: 16 },
-  liveStreamBadge: {
-    backgroundColor: COLORS.distressBg,
-    borderColor: COLORS.distress,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  liveStreamBadgeText: {
-    color: COLORS.distress,
-    fontSize: 10,
-    fontWeight: '800',
-  },
+  errorText: { color: COLORS.distress, fontSize: 12, marginBottom: 8 },
+  emptyText: { color: COLORS.textSecondary, fontSize: 13, marginBottom: 12 },
   ecgCard: {
     backgroundColor: COLORS.card,
     borderColor: COLORS.border,
@@ -161,19 +169,7 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     marginLeft: 4,
   },
-  graphBox: {
-    height: 60,
-    justifyContent: 'center',
-    backgroundColor: COLORS.background,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  graphWaveLine: {
-    height: 4,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 2,
-    width: '100%',
-  },
+  updatedAt: { color: COLORS.textMuted, fontSize: 10, marginTop: 8 },
   sideBySideRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -203,19 +199,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.textPrimary,
   },
-  pillNormal: {
-    backgroundColor: COLORS.mintBg,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginTop: 10,
-  },
-  pillNormalText: {
-    color: COLORS.mint,
-    fontSize: 11,
-    fontWeight: '700',
-  },
   motionCard: {
     backgroundColor: COLORS.card,
     borderColor: COLORS.border,
@@ -242,18 +225,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.textPrimary,
     marginTop: 4,
-  },
-  liveBadge: {
-    backgroundColor: COLORS.mintBg,
-    borderColor: COLORS.mint,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  liveBadgeText: {
-    color: COLORS.mint,
-    fontSize: 11,
-    fontWeight: '800',
   },
 });

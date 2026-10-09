@@ -213,6 +213,7 @@ export default function RegisterScreen({ navigation }) {
         emergencyContactPhone: emergencyPhoneRef.current.trim() || null,
         homeAddress: homeAddressRef.current.trim() || resolvedLocationName || null,
         homeLocation: homeLocation || { lat: null, lng: null },
+        childCode: childCodeRef.current.trim().toUpperCase() || null,
         consentGiven: true,
       });
       // Redirect to login page immediately

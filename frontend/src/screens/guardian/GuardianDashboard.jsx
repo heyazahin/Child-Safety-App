@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Vibration } from 'react-native';
-import * as Location from 'expo-location';
 import TopHeader from '../../components/TopHeader';
 import StatusCard from '../../components/StatusCard';
-import { getMyChild, getLatestReading } from '../../services/api';
+import VitalsTrend from '../../components/VitalsTrend';
+import { getMyChild, getReadingHistory } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { LanguageContext } from '../../context/LanguageContext';
 import { COLORS } from '../../theme';
@@ -14,24 +14,28 @@ export default function GuardianDashboard() {
 
   const [child, setChild] = useState(null);
   const [reading, setReading] = useState(null);
+  const [readings, setReadings] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const fetchData = async () => {
     try {
       setRefreshing(true);
+      setLoadError('');
       const childData = await getMyChild();
+      const history = await getReadingHistory(childData._id);
       setChild(childData);
-      if (childData && childData._id) {
-        const readingData = await getLatestReading(childData._id);
-        setReading(readingData.latestReading);
-      }
-      if (childData && childData.currentStatus && childData.currentStatus.toLowerCase() !== 'safe') {
-        try {
-          Vibration.vibrate([0, 500, 200, 500]);
-        } catch (_) {}
+      setReadings(history);
+      setReading(history[history.length - 1] || null);
+      if (['distress', 'tamper', 'alert'].includes(childData.currentStatus?.toLowerCase())) {
+        Vibration.vibrate([0, 500, 200, 500]);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setChild(null);
+      setReading(null);
+      setReadings([]);
+      setLoadError(error.response?.data?.error || error.message || 'Could not load child readings.');
     } finally {
       setRefreshing(false);
     }
@@ -48,7 +52,7 @@ export default function GuardianDashboard() {
     <View style={styles.screen}>
       <TopHeader
         title={`${greeting} ${user?.name || 'Sarah Thompson'}`}
-        subtitle={language === 'bn' ? 'শিশুর শারীরিক লাইভ তথ্য' : 'Child telemetry active'}
+        subtitle={language === 'bn' ? 'শিশুর সেন্সর রিডিং' : 'Child sensor readings'}
         isDistress={isDistress}
         rightElement={
           <TouchableOpacity style={styles.alertIconBtn} onPress={fetchData}>
@@ -61,13 +65,19 @@ export default function GuardianDashboard() {
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} tintColor={COLORS.mint} />}
       >
-        {/* Child Profile Banner matching Figma */}
-        <StatusCard
-          childName={child?.name || 'Emma T.'}
-          childAge={child?.age || 8}
-          status={child?.currentStatus || 'safe'}
-          lastUpdated={child?.lastReadingAt}
-        />
+        {!!loadError && <Text style={styles.errorText}>{loadError}</Text>}
+        {child ? (
+          <StatusCard
+            childName={child.name}
+            childAge={child.age}
+            status={child.currentStatus}
+            lastUpdated={reading?.timestamp || child.lastReadingAt}
+          />
+        ) : (
+          <Text style={styles.emptyText}>
+            {language === 'bn' ? 'আপনার অ্যাকাউন্টে কোনো শিশু লিংক করা নেই।' : 'No child is linked to your account.'}
+          </Text>
+        )}
 
         <Text style={styles.sectionHeader}>
           {language === 'bn' ? 'স্বাস্থ্য সেন্সর' : 'VITAL SENSORS'}
@@ -84,12 +94,16 @@ export default function GuardianDashboard() {
               <Text style={styles.sensorIcon}>❤️</Text>
             </View>
             <View style={styles.valRow}>
-              <Text style={styles.valNumber}>{reading?.heartRate || 72}</Text>
+              <Text style={styles.valNumber}>{reading?.heartRate ?? '—'}</Text>
               <Text style={styles.valUnit}> bpm</Text>
             </View>
-            {/* Sparkline Wave Mock */}
             <View style={styles.sparklineBox}>
-              <View style={styles.sparklineWave} />
+              <VitalsTrend
+                readings={readings}
+                field="heartRate"
+                height={24}
+                emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+              />
             </View>
           </View>
 
@@ -102,12 +116,15 @@ export default function GuardianDashboard() {
               <Text style={styles.sensorIcon}>💧</Text>
             </View>
             <View style={styles.valRow}>
-              <Text style={styles.valNumber}>{reading?.gsr || 4.2}</Text>
+              <Text style={styles.valNumber}>{reading?.gsr ?? '—'}</Text>
               <Text style={styles.valUnit}> μS</Text>
             </View>
-            <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>• {t('normal')}</Text>
-            </View>
+            <VitalsTrend
+              readings={readings}
+              field="gsr"
+              height={24}
+              emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+            />
           </View>
 
           {/* Card 3: Respiration */}
@@ -119,12 +136,15 @@ export default function GuardianDashboard() {
               <Text style={styles.sensorIcon}>🫁</Text>
             </View>
             <View style={styles.valRow}>
-              <Text style={styles.valNumber}>{reading?.respiration || 16}</Text>
+              <Text style={styles.valNumber}>{reading?.respiration ?? '—'}</Text>
               <Text style={styles.valUnit}> br/min</Text>
             </View>
-            <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>• {t('normal')}</Text>
-            </View>
+            <VitalsTrend
+              readings={readings}
+              field="respiration"
+              height={24}
+              emptyLabel={language === 'bn' ? 'কোনো রিডিং নেই' : 'No readings'}
+            />
           </View>
 
           {/* Card 4: Body Motion */}
@@ -136,10 +156,14 @@ export default function GuardianDashboard() {
               <Text style={styles.sensorIcon}>📈</Text>
             </View>
             <View style={styles.valRow}>
-              <Text style={styles.valNumber}>{t('calm')}</Text>
+              <Text style={styles.valNumber}>
+                {reading?.motionLevel ? t(reading.motionLevel) : '—'}
+              </Text>
             </View>
             <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>• {language === 'bn' ? 'স্থির' : 'Seated'}</Text>
+              <Text style={styles.pillBadgeText}>
+                {reading?.timestamp ? new Date(reading.timestamp).toLocaleTimeString() : 'No sensor data'}
+              </Text>
             </View>
           </View>
         </View>
@@ -243,15 +267,8 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   sparklineBox: {
-    height: 16,
-    justifyContent: 'center',
+    minHeight: 24,
     marginTop: 8,
-  },
-  sparklineWave: {
-    height: 3,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 2,
-    width: '100%',
   },
   pillBadge: {
     backgroundColor: COLORS.mintBg,
@@ -283,6 +300,16 @@ const styles = StyleSheet.create({
     color: COLORS.mint,
     fontSize: 14,
     fontWeight: '800',
+  },
+  errorText: {
+    color: COLORS.distress,
+    fontSize: 12,
+    marginVertical: 8,
+  },
+  emptyText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    marginVertical: 12,
   },
   locationCard: {
     borderRadius: 16,

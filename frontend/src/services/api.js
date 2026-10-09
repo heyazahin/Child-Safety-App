@@ -3,7 +3,7 @@ import safeStorage from '../utils/storage';
 import { Platform } from 'react-native';
 
 // Dynamically handle Web (localhost/hostname) vs Physical Phone (LAN IP)
-const LOCAL_IP = '192.168.0.105';
+const LOCAL_IP = '192.168.0.101';
 
 const getBaseUrl = () => {
   if (Platform.OS === 'web') {
@@ -43,23 +43,31 @@ export const getLocationName = async ({ lat, lng }) => {
 };
 
 export const getMyChild = async () => {
-  try {
-    const response = await api.get('/data/my-child');
-    return response.data;
-  } catch (error) {
-    console.warn('getMyChild failed:', error?.message);
-    return null;
-  }
+  const response = await api.get('/data/my-child');
+  return response.data;
 };
 
 export const getLatestReading = async (childId) => {
-  try {
-    const response = await api.get(`/data/latest/${childId}`);
-    return response.data;
-  } catch (error) {
-    console.warn('getLatestReading failed:', error?.message);
-    return { latestReading: { heartRate: 75, gsr: 0.35, respiration: 16, motionLevel: 'medium' } };
+  const response = await api.get(`/data/latest/${childId}`);
+  return response.data;
+};
+
+export const getReadingHistory = async (childId, limit = 20) => {
+  const response = await api.get(`/data/readings/${childId}`, { params: { limit } });
+  if (!Array.isArray(response.data)) {
+    throw new Error('The server returned an invalid reading history.');
   }
+  return response.data;
+};
+
+export const getAlertPreferences = async () => {
+  const response = await api.get('/auth/alert-preferences');
+  return response.data.alertPreferences;
+};
+
+export const updateAlertPreferences = async (alertPreferences) => {
+  const response = await api.put('/auth/alert-preferences', { alertPreferences });
+  return response.data.alertPreferences;
 };
 
 export const getAlertHistory = async (childId) => {

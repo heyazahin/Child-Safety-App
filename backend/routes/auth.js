@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Child = require('../models/Child');
 const { reverseGeocode } = require('../services/geocoding.service');
 
 const router = express.Router();
@@ -50,6 +51,7 @@ router.post('/register', async (req, res) => {
       emergencyContactPhone,
       homeAddress,
       homeLocation,       // { lat, lng }
+      childCode,
       consentGiven,
     } = req.body;
     
@@ -57,6 +59,14 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const normalizedChildCode = typeof childCode === 'string' ? childCode.trim().toUpperCase() : '';
+    const linkedChild = normalizedChildCode
+      ? await Child.findOne({ childCode: normalizedChildCode })
+      : null;
+    if (normalizedChildCode && !linkedChild) {
+      return res.status(400).json({ message: 'Child code was not found' });
     }
 
     // Role validation — never allow self-promotion to admin via API
@@ -78,10 +88,21 @@ router.post('/register', async (req, res) => {
       emergencyContactPhone: emergencyContactPhone || null,
       homeAddress: resolvedHomeAddress,
       homeLocation: homeLocation || { lat: null, lng: null },
+      linkedChildId: linkedChild?._id,
       consentGiven: consentGiven === true,
       consentGivenAt: consentGiven === true ? new Date() : null,
     });
     await user.save();
+
+    if (linkedChild) {
+      try {
+        linkedChild.linkedGuardianIds.addToSet(user._id);
+        await linkedChild.save();
+      } catch (error) {
+        await User.deleteOne({ _id: user._id });
+        throw error;
+      }
+    }
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -151,8 +172,62 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Update FCM / Expo Push Token
+// Guardian alert channel preferences
 const authenticateToken = require('../middleware/auth');
+router.get('/alert-preferences', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'guardian') {
+    return res.status(403).json({ message: 'Only guardians can manage alert preferences' });
+  }
+
+  try {
+    const user = await User.findById(req.user.userId).select('alertPreferences');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+      alertPreferences: {
+        push: user.alertPreferences?.push ?? true,
+        sms: user.alertPreferences?.sms ?? true,
+        call: user.alertPreferences?.call ?? false,
+      },
+    });
+  } catch (error) {
+    console.error('Get alert preferences error:', error);
+    res.status(500).json({ message: 'Failed to load alert preferences' });
+  }
+});
+
+router.put('/alert-preferences', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'guardian') {
+    return res.status(403).json({ message: 'Only guardians can manage alert preferences' });
+  }
+
+  const { push, sms, call } = req.body?.alertPreferences || {};
+  if ([push, sms, call].some(value => typeof value !== 'boolean')) {
+    return res.status(400).json({ message: 'Push, SMS, and call preferences must be boolean values' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { alertPreferences: { push, sms, call } },
+      { new: true, runValidators: true, select: 'alertPreferences' }
+    );
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+      alertPreferences: {
+        push: user.alertPreferences.push,
+        sms: user.alertPreferences.sms,
+        call: user.alertPreferences.call,
+      },
+    });
+  } catch (error) {
+    console.error('Update alert preferences error:', error);
+    res.status(500).json({ message: 'Failed to save alert preferences' });
+  }
+});
+
+// Update FCM / Expo Push Token
 router.put('/fcm-token', authenticateToken, async (req, res) => {
   try {
     const { token } = req.body;
